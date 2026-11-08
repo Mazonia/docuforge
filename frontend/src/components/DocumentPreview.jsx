@@ -27,12 +27,16 @@ export default function DocumentPreview({
   onPageBudgetChange,
   onAddCustomFromSelection
 }) {
-  const [viewMode, setViewMode] = useState('interactive'); // 'interactive' | 'realistic'
+  const [viewMode, setViewMode] = useState('interactive'); // 'interactive' | 'raw' | 'realistic'
   const [zoom, setZoom] = useState(100);
   
-  // Interactive view state
+  // Interactive view state (with user replacements)
   const [renderedParagraphs, setRenderedParagraphs] = useState([]);
   const [interactiveLoading, setInteractiveLoading] = useState(false);
+
+  // Raw / Original template view state (unmodified before any replacements)
+  const [rawParagraphs, setRawParagraphs] = useState([]);
+  const [rawLoading, setRawLoading] = useState(false);
 
   // Realistic view state
   const [realisticPages, setRealisticPages] = useState([]);
@@ -78,6 +82,42 @@ export default function DocumentPreview({
     fetchPreview();
     return () => { isMounted = false; };
   }, [template?.filepath, replacements, hiddenClauses, signatureDataUrl]);
+
+  // 2. Fetch raw template preview (original unmodified document)
+  useEffect(() => {
+    if (!template?.filepath) {
+      setRawParagraphs([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchRawPreview = async () => {
+      setRawLoading(true);
+      try {
+        const resp = await fetch('/api/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            template_path: template.filepath,
+            replacements: {},
+            hidden_clauses: [],
+            signature_data_url: null
+          })
+        });
+        const data = await resp.json();
+        if (isMounted && data.elements) {
+          setRawParagraphs(data.elements);
+        }
+      } catch (err) {
+        console.error("Failed to load raw template preview:", err);
+      } finally {
+        if (isMounted) setRawLoading(false);
+      }
+    };
+
+    fetchRawPreview();
+    return () => { isMounted = false; };
+  }, [template?.filepath]);
 
   // 2. Fetch realistic preview
   const fetchRealisticPreview = async () => {
@@ -180,6 +220,20 @@ export default function DocumentPreview({
             }}
           >
             Live Markup
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('raw')}
+            className={`btn-tactile text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              viewMode === 'raw' ? 'shadow-xs' : 'opacity-70 hover:opacity-100'
+            }`}
+            style={{
+              backgroundColor: viewMode === 'raw' ? 'var(--color-primary)' : 'transparent',
+              color: viewMode === 'raw' ? '#FFFFFF' : 'var(--text-primary)'
+            }}
+          >
+            Raw Template
           </button>
 
           <button
@@ -305,7 +359,7 @@ export default function DocumentPreview({
         style={{ backgroundColor: 'var(--bg-main)' }}
       >
         {viewMode === 'interactive' ? (
-          /* Mode 1: Interactive Live Markup Sheet */
+          /* Mode 1: Interactive Live Markup Sheet (With User Replacements) */
           <div
             className="mx-auto rounded-xl border p-8 md:p-12 transition-transform shadow-md"
             style={{
@@ -354,8 +408,68 @@ export default function DocumentPreview({
               </div>
             )}
           </div>
+        ) : viewMode === 'raw' ? (
+          /* Mode 2: Raw / Original Template View (Unmodified source document) */
+          <div
+            className="mx-auto rounded-xl border p-8 md:p-12 transition-transform shadow-md"
+            style={{
+              maxWidth: '750px',
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-color)',
+              transform: `scale(${zoom / 100})`,
+              transformOrigin: 'top center',
+              minHeight: '850px'
+            }}
+          >
+            <div className="mb-4 pb-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span className="text-xs font-bold text-slate-200">Original Template Source View</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded">
+                Unmodified brackets intact
+              </span>
+            </div>
+
+            {rawLoading ? (
+              <div className="flex items-center justify-center py-20 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <Sparkles className="w-4 h-4 animate-spin mr-2" />
+                <span>Loading original template...</span>
+              </div>
+            ) : rawParagraphs.length === 0 ? (
+              <div className="text-center py-20 text-xs" style={{ color: 'var(--text-muted)' }}>
+                No template text found.
+              </div>
+            ) : (
+              <div className="space-y-3.5 text-xs md:text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                {rawParagraphs.map((item, idx) => {
+                  if (item.is_heading) {
+                    return (
+                      <h3
+                        key={idx}
+                        className="font-bold text-base md:text-lg pt-3 pb-1 border-b"
+                        style={{
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                        dangerouslySetInnerHTML={{ __html: item.rendered_html }}
+                      />
+                    );
+                  }
+
+                  return (
+                    <p
+                      key={idx}
+                      className="leading-relaxed font-sans"
+                      dangerouslySetInnerHTML={{ __html: item.rendered_html }}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
         ) : (
-          /* Mode 2: Realistic Word/PDF Genuine Pages */
+          /* Mode 3: Realistic Word/PDF Genuine Pages */
           <div className="flex flex-col items-center space-y-6">
             {realisticLoading ? (
               <div className="py-24 text-center">

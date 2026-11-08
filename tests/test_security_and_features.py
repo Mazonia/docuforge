@@ -118,3 +118,4 @@ def test_xss_prevention_in_html_preview():
             assert "<script>" not in el["rendered_html"]
             if "alert('xss')" in el["rendered_html"]:
                 assert "&lt;script&gt;" in el["rendered_html"]
+
