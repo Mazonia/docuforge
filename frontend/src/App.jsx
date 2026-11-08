@@ -57,17 +57,13 @@ export default function App() {
     }
   }, [isDark]);
 
-  // Initial Load: Check backend and auto-load desktop sample
+  // Initial Load: Check backend health status (starts in a pristine blank slate)
   useEffect(() => {
     const initApp = async () => {
       try {
         const resp = await fetch('/api/status');
         const data = await resp.json();
         setServerStatus(data);
-
-        if (data.samples && data.samples.length > 0) {
-          loadSampleTemplate(data.samples[0].path);
-        }
       } catch (err) {
         console.error("Backend status check failed:", err);
       }
@@ -96,7 +92,15 @@ export default function App() {
     if (serverStatus?.samples?.[0]?.path) {
       await loadSampleTemplate(serverStatus.samples[0].path);
     } else {
-      await loadSampleTemplate("C:\\Users\\Mazonia\\Desktop\\Aseda Host Business Proposal Letter.docx");
+      try {
+        const resp = await fetch('/api/samples');
+        const data = await resp.json();
+        if (data.samples && data.samples.length > 0) {
+          await loadSampleTemplate(data.samples[0].filepath || data.samples[0].path);
+        }
+      } catch (err) {
+        console.error("Could not load sample template:", err);
+      }
     }
   };
 

@@ -4,3 +4,4 @@ Disallow: /api/
 Disallow: /output/
 
 Sitemap: https://docuforge.studio/sitemap.xml
+

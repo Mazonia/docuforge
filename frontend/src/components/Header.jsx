@@ -45,10 +45,10 @@ export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, 
               borderColor: 'var(--border-color)',
               color: 'var(--text-primary)'
             }}
-            title="Load desktop sample: Aseda Host Business Proposal Letter.docx"
+            title="Load bundled demo template to explore bracket scanning & batch generation"
           >
             <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--color-secondary)' }} />
-            <span>{isSampleLoading ? 'Loading Sample...' : 'Load Desktop Sample'}</span>
+            <span>{isSampleLoading ? 'Loading Demo...' : 'Load Demo Template'}</span>
           </button>
 
           {/* Open Output Folder */}

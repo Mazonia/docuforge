@@ -83,23 +83,28 @@ class PreviewRequest(BaseModel):
 def get_status():
     """System health check and environmental capabilities."""
     samples = []
-    # Check Desktop directly for latest user file
+
+    # 1. Bundled repo samples (works out of the box for any new user)
+    if os.path.exists(SAMPLES_DIR):
+        for f in os.listdir(SAMPLES_DIR):
+            if f.endswith((".docx", ".pdf")):
+                fpath = os.path.join(SAMPLES_DIR, f)
+                samples.append({
+                    "name": f,
+                    "path": fpath,
+                    "filepath": fpath,
+                    "size": os.path.getsize(fpath)
+                })
+
+    # 2. Local desktop sample fallback if present
     desktop_file = r"C:\Users\Mazonia\Desktop\Aseda Host Business Proposal Letter.docx"
-    if os.path.exists(desktop_file):
+    if os.path.exists(desktop_file) and not any(s["name"] == os.path.basename(desktop_file) for s in samples):
         samples.append({
             "name": os.path.basename(desktop_file),
             "path": desktop_file,
+            "filepath": desktop_file,
             "size": os.path.getsize(desktop_file)
         })
-
-    if os.path.exists(SAMPLES_DIR):
-        for f in os.listdir(SAMPLES_DIR):
-            if f.endswith((".docx", ".pdf")) and not any(s["name"] == f for s in samples):
-                samples.append({
-                    "name": f,
-                    "path": os.path.join(SAMPLES_DIR, f),
-                    "size": os.path.getsize(os.path.join(SAMPLES_DIR, f))
-                })
 
     return {
         "status": "ready",
@@ -114,22 +119,23 @@ def get_status():
 def list_samples():
     """Returns available sample templates."""
     samples = []
+    if os.path.exists(SAMPLES_DIR):
+        for f in os.listdir(SAMPLES_DIR):
+            if f.endswith((".docx", ".pdf")):
+                fpath = os.path.join(SAMPLES_DIR, f)
+                samples.append({
+                    "filename": f,
+                    "filepath": fpath,
+                    "size": os.path.getsize(fpath)
+                })
+
     desktop_file = r"C:\Users\Mazonia\Desktop\Aseda Host Business Proposal Letter.docx"
-    if os.path.exists(desktop_file):
+    if os.path.exists(desktop_file) and not any(s["filename"] == os.path.basename(desktop_file) for s in samples):
         samples.append({
             "filename": os.path.basename(desktop_file),
             "filepath": desktop_file,
             "size": os.path.getsize(desktop_file)
         })
-
-    if os.path.exists(SAMPLES_DIR):
-        for f in os.listdir(SAMPLES_DIR):
-            if f.endswith((".docx", ".pdf")) and not any(s["filename"] == f for s in samples):
-                samples.append({
-                    "filename": f,
-                    "filepath": os.path.join(SAMPLES_DIR, f),
-                    "size": os.path.getsize(os.path.join(SAMPLES_DIR, f))
-                })
     return {"samples": samples}
 
 
