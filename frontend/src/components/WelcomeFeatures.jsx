@@ -260,3 +260,4 @@ export default function WelcomeFeatures({ onLoadDemo, isDemoLoading }) {
     </div>
   );
 }
+

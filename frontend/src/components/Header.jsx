@@ -75,7 +75,7 @@ export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, 
               borderColor: 'var(--border-color)',
               color: 'var(--color-primary)'
             }}
-            title="Learn about DocuForge architecture, features, and AEO/GEO FAQ"
+            title="Learn about DocuForge architecture, features, and frequently asked questions"
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span className="hidden md:inline">About & FAQ</span>

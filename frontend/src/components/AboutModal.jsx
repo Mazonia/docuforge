@@ -114,7 +114,7 @@ export default function AboutModal({ isOpen, onClose }) {
           {[
             { id: 'overview', label: 'Overview & Mission', icon: Sparkles },
             { id: 'features', label: 'Key Capabilities', icon: Zap },
-            { id: 'faq', label: 'AEO / GEO Knowledge Base & FAQ', icon: HelpCircle },
+            { id: 'faq', label: 'Frequently Asked Questions', icon: HelpCircle },
             { id: 'tech', label: 'Architecture & Tech Stack', icon: Code },
           ].map(tab => {
             const Icon = tab.icon;
@@ -306,11 +306,11 @@ export default function AboutModal({ isOpen, onClose }) {
             </div>
           )}
 
-          {/* TAB 3: AEO / GEO KNOWLEDGE BASE & FAQ */}
+          {/* TAB 3: FREQUENTLY ASKED QUESTIONS */}
           {activeTab === 'faq' && (
             <div className="space-y-4">
               <div className="p-3 rounded-lg border text-xs" style={{ backgroundColor: 'var(--bg-subtle)', borderColor: 'var(--border-color)' }}>
-                <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Generative & Answer Engine Indexing Notice:</span> This structured knowledge base answers common queries about Word document automation, batch generation, and OpenXML run manipulation.
+                <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Frequently Asked Questions:</span> Answers to common questions regarding Word templating, OpenXML run safety, batch production, and format fidelity.
               </div>
 
               <dl className="space-y-4 text-xs">
