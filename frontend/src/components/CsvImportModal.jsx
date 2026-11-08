@@ -32,7 +32,9 @@ export default function CsvImportModal({ isOpen, onClose, onImport, template }) 
     }
 
     try {
-      const lines = pasteText.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
+      // Strip UTF-8 BOM if present
+      const cleanPaste = pasteText.replace(/^\uFEFF/, '').trim();
+      const lines = cleanPaste.split(/\r?\n/).filter(line => line.trim().length > 0);
       if (lines.length < 2) {
         setError("Data must contain at least a header row and one data row.");
         return;
@@ -50,17 +52,29 @@ export default function CsvImportModal({ isOpen, onClose, onImport, template }) 
         if (sep === '\t') {
           return rowStr.split('\t').map(s => s.trim().replace(/^["']|["']$/g, ''));
         }
-        const matches = [];
-        const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
-        let match;
-        while ((match = regex.exec(rowStr)) !== null) {
-          if (match.index === regex.lastIndex) regex.lastIndex++;
-          let val = match[1] || '';
-          val = val.trim().replace(/^"|"$/g, '').replace(/""/g, '"');
-          matches.push(val);
-          if (regex.lastIndex >= rowStr.length) break;
+        // RFC 4180 standard CSV splitting handling quotes and escaped double quotes
+        const result = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < rowStr.length; i++) {
+          const char = rowStr[i];
+          const next = rowStr[i + 1];
+          if (char === '"') {
+            if (inQuotes && next === '"') {
+              cur += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === sep && !inQuotes) {
+            result.push(cur.trim());
+            cur = '';
+          } else {
+            cur += char;
+          }
         }
-        return matches.length > 0 ? matches : rowStr.split(sep).map(s => s.trim());
+        result.push(cur.trim());
+        return result;
       };
 
       const headers = splitRow(lines[0]);

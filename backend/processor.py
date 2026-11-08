@@ -518,9 +518,23 @@ def generate_document(
     # 1. Handle optional paragraph exclusion if specified
     if hidden_clauses:
         for phrase in hidden_clauses:
+            if not phrase:
+                continue
             for p in list(doc.paragraphs):
-                if phrase and phrase in p.text:
-                    p._element.getparent().remove(p._element)
+                if phrase in p.text:
+                    try:
+                        p._element.getparent().remove(p._element)
+                    except Exception:
+                        pass
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for p in list(cell.paragraphs):
+                            if phrase in p.text:
+                                try:
+                                    p._element.getparent().remove(p._element)
+                                except Exception:
+                                    pass
 
     # 2. Extract signature image to temporary file if provided as base64
     temp_sig_path = None
@@ -551,19 +565,23 @@ def generate_document(
 def convert_docx_to_pdf(docx_path: str, output_pdf_path: str) -> str:
     """
     Converts DOCX to PDF using native Microsoft Word via COM for 100% genuine layout fidelity.
+    Robustly handles Dispatch retry and clean cleanup of Word process handles.
     """
     docx_path = os.path.abspath(docx_path)
     output_pdf_path = os.path.abspath(output_pdf_path)
     os.makedirs(os.path.dirname(output_pdf_path), exist_ok=True)
 
     if not HAS_WIN32COM:
-        raise RuntimeError("win32com is not available for Word automation.")
+        raise RuntimeError("Microsoft Word (win32com) is not installed or available on this host.")
 
     pythoncom.CoInitialize()
     word = None
     doc = None
     try:
-        word = win32com.client.Dispatch("Word.Application")
+        try:
+            word = win32com.client.DispatchEx("Word.Application")
+        except Exception:
+            word = win32com.client.Dispatch("Word.Application")
         word.Visible = False
         word.DisplayAlerts = 0  # wdAlertsNone
         doc = word.Documents.Open(docx_path, ConfirmConversions=False, ReadOnly=True, AddToRecentFiles=False)
