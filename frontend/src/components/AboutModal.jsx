@@ -115,7 +115,6 @@ export default function AboutModal({ isOpen, onClose }) {
             { id: 'overview', label: 'Overview & Mission', icon: Sparkles },
             { id: 'features', label: 'Key Capabilities', icon: Zap },
             { id: 'faq', label: 'Frequently Asked Questions', icon: HelpCircle },
-            { id: 'tech', label: 'Architecture & Tech Stack', icon: Code },
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -359,49 +358,10 @@ export default function AboutModal({ isOpen, onClose }) {
                   </dd>
                 </div>
               </dl>
-            </div>
-          )}
-
-          {/* TAB 4: ARCHITECTURE & TECH STACK */}
-          {activeTab === 'tech' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border space-y-3" style={{ backgroundColor: 'var(--bg-subtle)', borderColor: 'var(--border-color)' }}>
-                  <div className="flex items-center space-x-2">
-                    <Cpu className="w-4 h-4 text-sky-500" />
-                    <h5 className="font-bold text-xs" style={{ color: 'var(--text-primary)' }}>
-                      Backend Engine
-                    </h5>
-                  </div>
-                  <ul className="text-xs space-y-1.5">
-                    <li>• <strong>FastAPI (Python 3.12)</strong>: High-speed asynchronous REST API.</li>
-                    <li>• <strong>python-docx</strong>: OpenXML parsing and AST manipulation.</li>
-                    <li>• <strong>win32com (Word COM)</strong>: Native Microsoft Word engine for 100% faithful PDF rasterization.</li>
-                    <li>• <strong>PyMuPDF (fitz)</strong>: Ultra-fast vector rendering of preview pages.</li>
-                    <li>• <strong>Pydantic v2</strong>: Strongly typed data validation for batch requests.</li>
-                  </ul>
-                </div>
-
-                <div className="p-4 rounded-xl border space-y-3" style={{ backgroundColor: 'var(--bg-subtle)', borderColor: 'var(--border-color)' }}>
-                  <div className="flex items-center space-x-2">
-                    <Sliders className="w-4 h-4 text-emerald-500" />
-                    <h5 className="font-bold text-xs" style={{ color: 'var(--text-primary)' }}>
-                      Frontend Interface
-                    </h5>
-                  </div>
-                  <ul className="text-xs space-y-1.5">
-                    <li>• <strong>React 18 & Vite</strong>: Instant reactive state management.</li>
-                    <li>• <strong>Tailwind CSS</strong>: High-density executive design system.</li>
-                    <li>• <strong>Lucide Icons</strong>: Clean, lightweight iconset.</li>
-                    <li>• <strong>Color System</strong>: Vibrant Dark Turquoise (#00CED1), Forest Jade (#059669), Ochre Amber (#D97706).</li>
-                    <li>• <strong>Dual Theme Engine</strong>: Persistent Dark & Light modes.</li>
-                  </ul>
-                </div>
-              </div>
 
               {/* GitHub Link Card */}
               <div 
-                className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4"
                 style={{ backgroundColor: 'var(--bg-subtle)', borderColor: 'var(--border-color)' }}
               >
                 <div>
@@ -409,7 +369,7 @@ export default function AboutModal({ isOpen, onClose }) {
                     Open Source Repository
                   </h6>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Contribute, inspect source code, or report issues on GitHub.
+                    Inspect source code, releases, and updates on GitHub.
                   </p>
                 </div>
                 <a
@@ -419,7 +379,7 @@ export default function AboutModal({ isOpen, onClose }) {
                   className="btn-tactile px-4 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 shadow-xs"
                   style={{
                     backgroundColor: 'var(--color-primary)',
-                    color: '#FFFFFF'
+                    color: 'var(--color-primary-text)'
                   }}
                 >
                   <GithubIcon className="w-4 h-4" />
