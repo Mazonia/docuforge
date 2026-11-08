@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+venv/
+ENV/
+
+# Output files & caches
+backend/output/*
+!backend/output/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+.playwright-mcp/
+
+# Vite & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+dist/
