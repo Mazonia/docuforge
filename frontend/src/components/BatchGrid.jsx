@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import EmailDispatchModal from './EmailDispatchModal';
 import SignatureModal from './SignatureModal';
+import FormulaModal from './FormulaModal';
 
 export default function BatchGrid({
   template,
@@ -38,50 +39,47 @@ export default function BatchGrid({
   const [format, setFormat] = useState('both');
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isSigModalOpen, setIsSigModalOpen] = useState(false);
+  const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
+  const [batchCalculationCount, setBatchCalculationCount] = useState(0);
 
   const placeholders = template?.placeholders || [];
 
-  // Batch Formula Calculation Engine (Suggestion 2)
-  const handleCalculateAllRows = () => {
+  // Selective Batch Formula Calculation from Modal
+  const handleApplyBatchCalculation = ({ targetRaw, baseRaw, modifierRaw }) => {
     setRows(prevRows => {
       return prevRows.map(row => {
-        const updatedReplacements = { ...row.replacements };
-        let hours = 0;
-        let rate = 0;
-        let amount = 0;
-        let feePct = 0;
+        const reps = { ...row.replacements };
+        const parseNum = (val) => {
+          if (!val) return 0;
+          const clean = String(val).replace(/[^0-9.-]/g, '');
+          return parseFloat(clean) || 0;
+        };
+        const bVal = parseNum(reps[baseRaw]);
+        const mVal = parseNum(reps[modifierRaw]);
 
-        for (const [k, v] of Object.entries(updatedReplacements)) {
-          const valStr = String(v).replace(/[^0-9.]/g, '');
-          const num = parseFloat(valStr);
-          if (isNaN(num)) continue;
-
-          const kl = k.toLowerCase();
-          if (kl.includes('hour') && !kl.includes('rate')) hours = num;
-          else if (kl.includes('rate')) rate = num;
-          else if (kl.includes('amount') || kl.includes('subtotal') || kl.includes('bounty')) amount = num;
-          else if (kl.includes('fee') || kl.includes('surcharge') || kl.includes('[x]')) feePct = num;
+        // If modifier field is a rate or fee %, compute accordingly
+        const kMod = (modifierRaw || '').toLowerCase();
+        let resultNum = 0;
+        if (kMod.includes('rate') || kMod.includes('price')) {
+          resultNum = bVal * mVal;
+        } else {
+          // Default percentage fee add
+          const fee = bVal * (mVal / 100);
+          resultNum = bVal + fee;
         }
 
-        const calculatedSubtotal = (hours > 0 && rate > 0) ? (hours * rate) : (amount || 45000);
-        const calculatedFee = (feePct > 0) ? (calculatedSubtotal * (feePct / 100)) : 0;
-        const calculatedTotal = calculatedSubtotal + calculatedFee;
-
-        placeholders.forEach(p => {
-          const pl = p.key.toLowerCase();
-          if ((pl.includes('total') || pl.includes('payout')) && !pl.includes('timing')) {
-            updatedReplacements[p.raw] = calculatedTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          } else if (pl.includes('amount') && hours > 0 && rate > 0) {
-            updatedReplacements[p.raw] = calculatedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          }
+        reps[targetRaw] = resultNum.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
         });
 
         return {
           ...row,
-          replacements: updatedReplacements
+          replacements: reps
         };
       });
     });
+    setBatchCalculationCount(prev => prev + 1);
   };
 
   // Build clean column descriptors with tailored widths based on data type
@@ -307,6 +305,15 @@ export default function BatchGrid({
 
   return (
     <div className="space-y-6">
+      <FormulaModal
+        isOpen={isFormulaModalOpen}
+        onClose={() => setIsFormulaModalOpen(false)}
+        placeholders={placeholders}
+        currentReplacements={rows[activeRowIndex]?.replacements || {}}
+        onApplyCalculation={handleApplyBatchCalculation}
+        hasCalculatedOnce={batchCalculationCount > 0}
+      />
+
       <EmailDispatchModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
@@ -356,15 +363,15 @@ export default function BatchGrid({
             <span>Load Sample Squadrons</span>
           </button>
 
-          {/* Calculate All Formulas (Suggestion 2) */}
+          {/* Calculate All Formulas (Opens Selective Formula Modal) */}
           <button
             type="button"
-            onClick={handleCalculateAllRows}
+            onClick={() => setIsFormulaModalOpen(true)}
             className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer bg-[#00CED1]/15 border-[#00CED1] text-[#00CED1] hover:bg-[#00CED1]/25"
-            title="Calculate math formulas across all rows"
+            title="Configure and calculate math formulas across rows"
           >
             <Calculator className="w-3.5 h-3.5" />
-            <span>Calculate All Formulas</span>
+            <span>{batchCalculationCount > 0 ? `Calculate Formulas (${batchCalculationCount})` : 'Calculate Formulas'}</span>
           </button>
 
           {/* Global Signature (Suggestion 8) */}

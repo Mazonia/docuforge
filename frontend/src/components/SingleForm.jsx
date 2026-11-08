@@ -19,6 +19,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import SignatureModal from './SignatureModal';
+import FormulaModal from './FormulaModal';
 
 export default function SingleForm({ 
   template, 
@@ -39,49 +40,18 @@ export default function SingleForm({
   const [showSnippets, setShowSnippets] = useState({});
   const [conditionalModes, setConditionalModes] = useState({});
   const [isSigModalOpen, setIsSigModalOpen] = useState(false);
+  const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
+  const [calculationCount, setCalculationCount] = useState(0);
 
   const placeholders = template?.placeholders || [];
 
-  // Formula Calculation Engine (Suggestion 2)
-  const handleCalculateFormulas = () => {
-    setReplacements(prev => {
-      const updated = { ...prev };
-      
-      // Look for rate/hours/subtotal/fee values
-      let hours = 0;
-      let rate = 0;
-      let amount = 0;
-      let feePct = 0;
-
-      for (const [k, v] of Object.entries(updated)) {
-        const valStr = String(v).replace(/[^0-9.]/g, '');
-        const num = parseFloat(valStr);
-        if (isNaN(num)) continue;
-
-        const kl = k.toLowerCase();
-        if (kl.includes('hour') && !kl.includes('rate')) hours = num;
-        else if (kl.includes('rate')) rate = num;
-        else if (kl.includes('amount') || kl.includes('subtotal') || kl.includes('bounty')) amount = num;
-        else if (kl.includes('fee') || kl.includes('surcharge') || kl.includes('[x]')) feePct = num;
-      }
-
-      // Calculate any empty or target formula fields
-      const calculatedSubtotal = (hours > 0 && rate > 0) ? (hours * rate) : (amount || 45000);
-      const calculatedFee = (feePct > 0) ? (calculatedSubtotal * (feePct / 100)) : 0;
-      const calculatedTotal = calculatedSubtotal + calculatedFee;
-
-      // Update placeholders matching total / amount / payout
-      placeholders.forEach(p => {
-        const pl = p.key.toLowerCase();
-        if ((pl.includes('total') || pl.includes('payout')) && !pl.includes('timing')) {
-          updated[p.raw] = calculatedTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        } else if (pl.includes('amount') && hours > 0 && rate > 0) {
-          updated[p.raw] = calculatedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-      });
-
-      return updated;
-    });
+  // Selective Formula Application from Modal
+  const handleApplyCalculation = ({ targetRaw, value, baseRaw, modifierRaw }) => {
+    setReplacements(prev => ({
+      ...prev,
+      [targetRaw]: value
+    }));
+    setCalculationCount(prev => prev + 1);
   };
 
   // Toggle optional clause visibility (Suggestion 4)
@@ -216,6 +186,15 @@ export default function SingleForm({
 
   return (
     <div className="space-y-6">
+      <FormulaModal
+        isOpen={isFormulaModalOpen}
+        onClose={() => setIsFormulaModalOpen(false)}
+        placeholders={placeholders}
+        currentReplacements={replacements}
+        onApplyCalculation={handleApplyCalculation}
+        hasCalculatedOnce={calculationCount > 0}
+      />
+
       <SignatureModal
         isOpen={isSigModalOpen}
         onClose={() => setIsSigModalOpen(false)}
@@ -254,15 +233,15 @@ export default function SingleForm({
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
-          {/* Calculate Formulas Button (Suggestion 2) */}
+          {/* Calculate Formulas Button (Opens Selective Formula Modal) */}
           <button
             type="button"
-            onClick={handleCalculateFormulas}
+            onClick={() => setIsFormulaModalOpen(true)}
             className="btn-tactile text-xs font-semibold px-3 py-1.5 rounded-lg border flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer bg-[#00CED1]/15 border-[#00CED1] text-[#00CED1] hover:bg-[#00CED1]/25"
-            title="Click to calculate mathematical and financial fields"
+            title="Configure and selectively calculate formulas for specific fields"
           >
             <Calculator className="w-3.5 h-3.5" />
-            <span>Calculate Formulas</span>
+            <span>{calculationCount > 0 ? `Calculate Formulas (${calculationCount})` : 'Calculate Formulas'}</span>
           </button>
 
           {/* Attach Signature Button (Suggestion 8) */}
