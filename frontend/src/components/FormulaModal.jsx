@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Calculator, X, Check, ArrowRight, Sparkles, RefreshCw, AlertCircle } from "lucide-react";
+import { useToast } from "./ToastProvider";
 
 export default function FormulaModal({
   isOpen,
@@ -9,6 +10,7 @@ export default function FormulaModal({
   onApplyCalculation,
   hasCalculatedOnce,
 }) {
+  const { addToast } = useToast();
   if (!isOpen) return null;
 
   // Filter numeric or formula-relevant fields
@@ -84,7 +86,7 @@ export default function FormulaModal({
 
   const handleApply = () => {
     if (!targetFieldRaw) {
-      alert("Please select a target field to store the calculation result.");
+      addToast("Please select a target field to store the calculation result.", "warning");
       return;
     }
 

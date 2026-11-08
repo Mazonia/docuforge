@@ -19,6 +19,7 @@ import {
 import EmailDispatchModal from './EmailDispatchModal';
 import SignatureModal from './SignatureModal';
 import FormulaModal from './FormulaModal';
+import { useToast } from './ToastProvider';
 
 export default function BatchGrid({
   template,
@@ -35,6 +36,7 @@ export default function BatchGrid({
   globalSignature,
   setGlobalSignature
 }) {
+  const { addToast } = useToast();
   const [batchTitle, setBatchTitle] = useState('Vanguard_Orbital_Ranger_Batch');
   const [format, setFormat] = useState('both');
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -185,7 +187,7 @@ export default function BatchGrid({
 
   const deleteRow = (index) => {
     if (rows.length <= 1) {
-      alert("At least one recipient row must be kept.");
+      addToast("At least one recipient row must be kept.", "warning");
       return;
     }
     setRows(prev => prev.filter((_, i) => i !== index));
@@ -276,23 +278,46 @@ export default function BatchGrid({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ placeholders })
       });
-      const blob = await resp.blob();
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${template.filename.replace(/\.[^/.]+$/, "")}_batch_template.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        addToast("CSV template downloaded.", "success");
+        return;
+      }
+    } catch (err) {
+      // Fallback client-side CSV generation
+    }
+
+    // Client-side CSV generation fallback for browser / GitHub Pages
+    try {
+      const keys = (placeholders || []).map(p => p.key || p.raw);
+      const headers = ["Recipient / Label", ...keys];
+      const sample = ["Example Squadron", ...(placeholders || []).map(p => p.suggested || '')];
+      const csvContent = [headers.join(","), sample.join(",")].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${template.filename.replace(/\.[^/.]+$/, "")}_batch_template.csv`;
+      a.download = `${template.filename?.replace(/\.[^/.]+$/, "") || "template"}_batch_template.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
-    } catch (err) {
-      alert("Failed to export CSV template: " + err.message);
+      addToast("CSV template exported.", "success");
+    } catch (clientErr) {
+      addToast(`Failed to export CSV: ${clientErr.message}`, "error");
     }
   };
 
   const handleSubmitBatch = (e) => {
     e.preventDefault();
     if (!rows.length) {
-      alert("Please add at least one recipient row.");
+      addToast("Please add at least one recipient row.", "warning");
       return;
     }
     onGenerateBatch({

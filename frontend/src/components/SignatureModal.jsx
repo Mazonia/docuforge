@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { PenTool, Upload, RotateCcw, Check, X, ShieldCheck } from "lucide-react";
+import { useToast } from "./ToastProvider";
 
 export default function SignatureModal({ isOpen, onClose, onSave, currentSignature }) {
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState("draw"); // "draw" or "upload"
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -86,7 +88,7 @@ export default function SignatureModal({ isOpen, onClose, onSave, currentSignatu
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("Signature image must be under 5MB.");
+        addToast("Signature image must be under 5MB.", "warning");
         return;
       }
       const reader = new FileReader();

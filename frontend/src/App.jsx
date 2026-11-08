@@ -11,6 +11,8 @@ import WelcomeFeatures from './components/WelcomeFeatures';
 import TemplateDrawer from './components/TemplateDrawer';
 import SignatureModal from './components/SignatureModal';
 import { DEMO_TEMPLATE } from './demoData';
+import { parseDocxInBrowser } from './clientDocxParser';
+import { useToast } from './components/ToastProvider';
 import { 
   FileText, 
   Table, 
@@ -21,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const { addToast } = useToast();
   const [isDark, setIsDark] = useState(() => {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
@@ -79,8 +82,10 @@ export default function App() {
     const initApp = async () => {
       try {
         const resp = await fetch('/api/status');
-        const data = await resp.json();
-        setServerStatus(data);
+        if (resp.ok) {
+          const data = await resp.json();
+          setServerStatus(data);
+        }
       } catch (err) {
         console.error("Backend status check failed:", err);
       }
@@ -96,10 +101,15 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: samplePath })
       });
-      const data = await resp.json();
-      setupTemplate(data);
+      if (resp.ok) {
+        const data = await resp.json();
+        setupTemplate(data, true);
+      } else {
+        setupTemplate(DEMO_TEMPLATE, true);
+      }
     } catch (err) {
       console.error("Failed to load sample:", err);
+      setupTemplate(DEMO_TEMPLATE, true);
     } finally {
       setIsSampleLoading(false);
     }
@@ -122,26 +132,29 @@ export default function App() {
         console.warn("Backend not detected, activating offline browser client mode.");
       }
       // Instant offline / GitHub Pages demo mode fallback!
-      setupTemplate(DEMO_TEMPLATE);
+      setupTemplate(DEMO_TEMPLATE, true);
     }
   };
 
-  const setupTemplate = (templateData) => {
+  const setupTemplate = (templateData, isDefaultSpace = false) => {
     setTemplate(templateData);
 
-    const initialReplacements = {
-      '[Ranger Unit Name]': 'Aegis Recon Squadron 9',
-      '[Rank and Last Name]': 'Commander Valeria Cross',
-      '[Specialization Division]': 'Deep Space Plasma Interception',
-      '[Assigned Star Sector]': 'Kepler Outpost Sector 4',
-      '[Vessel Class]': 'Vanguard Hyper-Cruiser MK-IV',
-      '[amount]': '45,000',
-      '[X]': '6',
-      '[payout timing]': '24 hours',
-      '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 45,000 Credits',
-      '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 6% from each completed mission payout',
-      '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 24 hours of debriefing approval'
-    };
+    const initialReplacements = {};
+    if (isDefaultSpace) {
+      Object.assign(initialReplacements, {
+        '[Ranger Unit Name]': 'Aegis Recon Squadron 9',
+        '[Rank and Last Name]': 'Commander Valeria Cross',
+        '[Specialization Division]': 'Deep Space Plasma Interception',
+        '[Assigned Star Sector]': 'Kepler Outpost Sector 4',
+        '[Vessel Class]': 'Vanguard Hyper-Cruiser MK-IV',
+        '[amount]': '45,000',
+        '[X]': '6',
+        '[payout timing]': '24 hours',
+        '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 45,000 Credits',
+        '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 6% from each completed mission payout',
+        '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 24 hours of debriefing approval'
+      });
+    }
 
     templateData.placeholders?.forEach(p => {
       if (!initialReplacements[p.raw]) {
@@ -150,47 +163,63 @@ export default function App() {
     });
     setSingleReplacements(initialReplacements);
 
-    const initialBatch = [
-      {
-        id: 'rec_1',
-        label: 'Aegis Recon Squadron 9',
-        replacements: { ...initialReplacements }
-      },
-      {
-        id: 'rec_2',
-        label: 'Solaris Nebula Explorers',
-        replacements: {
-          '[Ranger Unit Name]': 'Solaris Nebula Explorers',
-          '[Rank and Last Name]': 'Captain Jaxen Drake',
-          '[Specialization Division]': 'Planetary Shielding & Escort',
-          '[Assigned Star Sector]': 'Orion Gateway Sector 7',
-          '[Vessel Class]': 'Orbital Interceptor Class-A',
-          '[amount]': '60,000',
-          '[X]': '8',
-          '[payout timing]': '12 hours',
-          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'is fully subsidized by Galactic Council',
-          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 8% from each completed mission payout',
-          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 12 hours of debriefing approval'
+    let initialBatch = [];
+    if (isDefaultSpace) {
+      initialBatch = [
+        {
+          id: 'rec_1',
+          label: 'Aegis Recon Squadron 9',
+          replacements: { ...initialReplacements }
+        },
+        {
+          id: 'rec_2',
+          label: 'Solaris Nebula Explorers',
+          replacements: {
+            '[Ranger Unit Name]': 'Solaris Nebula Explorers',
+            '[Rank and Last Name]': 'Captain Jaxen Drake',
+            '[Specialization Division]': 'Planetary Shielding & Escort',
+            '[Assigned Star Sector]': 'Orion Gateway Sector 7',
+            '[Vessel Class]': 'Orbital Interceptor Class-A',
+            '[amount]': '60,000',
+            '[X]': '8',
+            '[payout timing]': '12 hours',
+            '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'is fully subsidized by Galactic Council',
+            '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 8% from each completed mission payout',
+            '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 12 hours of debriefing approval'
+          }
+        },
+        {
+          id: 'rec_3',
+          label: 'Hyperion Void Walkers',
+          replacements: {
+            '[Ranger Unit Name]': 'Hyperion Void Walkers',
+            '[Rank and Last Name]': 'Lieutenant Kira Vance',
+            '[Specialization Division]': 'Asteroid Hazard Demolition',
+            '[Assigned Star Sector]': 'Proxima Centauri Alpha',
+            '[Vessel Class]': 'Quantum Dreadnought EX',
+            '[amount]': '35,000',
+            '[X]': '5',
+            '[payout timing]': '48 hours',
+            '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 35,000 Credits',
+            '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 5% from each completed mission payout',
+            '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 48 hours of debriefing approval'
+          }
         }
-      },
-      {
-        id: 'rec_3',
-        label: 'Hyperion Void Walkers',
-        replacements: {
-          '[Ranger Unit Name]': 'Hyperion Void Walkers',
-          '[Rank and Last Name]': 'Lieutenant Kira Vance',
-          '[Specialization Division]': 'Asteroid Hazard Demolition',
-          '[Assigned Star Sector]': 'Proxima Centauri Alpha',
-          '[Vessel Class]': 'Quantum Dreadnought EX',
-          '[amount]': '35,000',
-          '[X]': '5',
-          '[payout timing]': '48 hours',
-          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 35,000 Credits',
-          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 5% from each completed mission payout',
-          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 48 hours of debriefing approval'
+      ];
+    } else {
+      initialBatch = [
+        {
+          id: 'rec_1',
+          label: 'Document 1',
+          replacements: { ...initialReplacements }
+        },
+        {
+          id: 'rec_2',
+          label: 'Document 2',
+          replacements: { ...initialReplacements }
         }
-      }
-    ];
+      ];
+    }
 
     setBatchRows(initialBatch);
     setActiveBatchRowIndex(0);
@@ -200,22 +229,37 @@ export default function App() {
 
   const handleFileUpload = async (file) => {
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
 
+    // 1. Try local FastAPI backend if running
     try {
+      const formData = new FormData();
+      formData.append('file', file);
       const resp = await fetch('/api/upload', {
         method: 'POST',
         body: formData
       });
-      if (!resp.ok) {
-        const errData = await resp.json();
-        throw new Error(errData.detail || "Upload failed");
+      if (resp.ok) {
+        const data = await resp.json();
+        setupTemplate(data);
+        addToast(`Template "${file.name}" loaded successfully.`, 'success');
+        setIsUploading(false);
+        return;
       }
-      const data = await resp.json();
-      setupTemplate(data);
     } catch (err) {
-      alert("Error processing document: " + err.message);
+      // Backend unavailable; continue to browser-native parser
+    }
+
+    // 2. Client-side browser parser fallback (works 100% on GitHub Pages & offline)
+    try {
+      if (file.name.toLowerCase().endsWith('.docx')) {
+        const clientParsed = await parseDocxInBrowser(file);
+        setupTemplate(clientParsed, false);
+        addToast(`Parsed "${file.name}" in browser. All ${clientParsed.placeholders.length} bracket variables extracted!`, 'success');
+      } else {
+        addToast("In-browser parsing supports Microsoft Word (.docx) templates. Please upload a .docx file.", "warning");
+      }
+    } catch (parseErr) {
+      addToast(`Could not parse template: ${parseErr.message}`, 'error');
     } finally {
       setIsUploading(false);
     }
@@ -230,11 +274,12 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!resp.ok) throw new Error("Generation failed");
+      if (!resp.ok) throw new Error("Backend offline or request failed.");
       const data = await resp.json();
       setSingleResult(data);
+      addToast("Document generated successfully!", "success");
     } catch (err) {
-      alert("Document Generation Error: " + err.message);
+      addToast(`Document generation requires local backend. Run 'python run.py' locally for Word COM PDF export.`, "info");
     } finally {
       setIsGeneratingSingle(false);
     }
@@ -252,8 +297,9 @@ export default function App() {
       if (!resp.ok) throw new Error("Batch generation failed");
       const data = await resp.json();
       setBatchResult(data);
+      addToast(`Batch generated ${data.total_files} files successfully!`, "success");
     } catch (err) {
-      alert("Batch Generation Error: " + err.message);
+      addToast(`Batch export requires local backend. Run 'python run.py' to generate native DOCX and PDF ZIPs.`, "info");
     } finally {
       setIsGeneratingBatch(false);
     }

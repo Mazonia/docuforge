@@ -181,11 +181,13 @@ export default function DocumentPreview({
           signature_data_url: signatureDataUrl
         })
       });
-      const data = await resp.json();
-      if (data.success && data.pages) {
-        setRealisticPages(data.pages);
-        setRealisticPdfUrl(data.pdf_url);
-        setCurrentPage(0);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.success && data.pages) {
+          setRealisticPages(data.pages);
+          setRealisticPdfUrl(data.pdf_url);
+          setCurrentPage(0);
+        }
       }
     } catch (err) {
       console.error("Realistic preview error:", err);

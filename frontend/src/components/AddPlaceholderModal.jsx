@@ -25,8 +25,10 @@ export default function AddPlaceholderModal({ isOpen, onClose, onAdd, templatePa
             query: targetText.trim()
           })
         });
-        const data = await resp.json();
-        setSearchResult(data);
+        if (resp.ok) {
+          const data = await resp.json();
+          setSearchResult(data);
+        }
       } catch (err) {
         console.error("Search text error:", err);
       } finally {
