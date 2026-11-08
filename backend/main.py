@@ -84,7 +84,7 @@ def get_status():
     """System health check and environmental capabilities."""
     samples = []
 
-    # 1. Bundled repo samples (works out of the box for any new user)
+    # Bundled repo samples (works out of the box for any new user)
     if os.path.exists(SAMPLES_DIR):
         for f in os.listdir(SAMPLES_DIR):
             if f.endswith((".docx", ".pdf")):
@@ -95,16 +95,6 @@ def get_status():
                     "filepath": fpath,
                     "size": os.path.getsize(fpath)
                 })
-
-    # 2. Local desktop sample fallback if present
-    desktop_file = r"C:\Users\Mazonia\Desktop\Aseda Host Business Proposal Letter.docx"
-    if os.path.exists(desktop_file) and not any(s["name"] == os.path.basename(desktop_file) for s in samples):
-        samples.append({
-            "name": os.path.basename(desktop_file),
-            "path": desktop_file,
-            "filepath": desktop_file,
-            "size": os.path.getsize(desktop_file)
-        })
 
     return {
         "status": "ready",
@@ -129,13 +119,6 @@ def list_samples():
                     "size": os.path.getsize(fpath)
                 })
 
-    desktop_file = r"C:\Users\Mazonia\Desktop\Aseda Host Business Proposal Letter.docx"
-    if os.path.exists(desktop_file) and not any(s["filename"] == os.path.basename(desktop_file) for s in samples):
-        samples.append({
-            "filename": os.path.basename(desktop_file),
-            "filepath": desktop_file,
-            "size": os.path.getsize(desktop_file)
-        })
     return {"samples": samples}
 
 

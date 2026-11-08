@@ -27,7 +27,7 @@ export default function BatchGrid({
   onOpenCsvModal,
   onOpenAddPlaceholderModal
 }) {
-  const [batchTitle, setBatchTitle] = useState('AsedaHost_Marketplace_Vendors_Batch');
+  const [batchTitle, setBatchTitle] = useState('Vanguard_Orbital_Ranger_Batch');
   const [format, setFormat] = useState('both');
 
   const placeholders = template?.placeholders || [];
@@ -148,66 +148,70 @@ export default function BatchGrid({
     const sampleRows = [
       {
         id: 'rec_1',
-        label: 'Studio 45 Visuals',
+        label: 'Aegis Recon Squadron 9',
         replacements: {
-          '[Business Name]': 'Studio 45 Visuals',
-          '[Title and Last Name]': 'Mr. Kwame Darko',
-          '[service type, e.g. photography]': 'photography & live streaming',
-          '[service type]': 'photography',
-          '[amount]': '150.00',
-          '[X]': '7',
+          '[Ranger Unit Name]': 'Aegis Recon Squadron 9',
+          '[Rank and Last Name]': 'Commander Valeria Cross',
+          '[Specialization Division]': 'Deep Space Plasma Interception',
+          '[Assigned Star Sector]': 'Kepler Outpost Sector 4',
+          '[Vessel Class]': 'Vanguard Hyper-Cruiser MK-IV',
+          '[amount]': '45,000',
+          '[X]': '6',
           '[payout timing]': '24 hours',
-          '[is free / carries a setup fee of GHS [amount]]': 'carries a setup fee of GHS 150.00',
-          '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 7% from each paid booking',
-          '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 24 hours of the service date'
+          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 45,000 Credits',
+          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 6% from each completed mission payout',
+          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 24 hours of debriefing approval'
         }
       },
       {
         id: 'rec_2',
-        label: 'SoundWave Rentals',
+        label: 'Solaris Nebula Explorers',
         replacements: {
-          '[Business Name]': 'SoundWave Sound & Rentals',
-          '[Title and Last Name]': 'Ms. Abena Osei',
-          '[service type, e.g. photography]': 'sound gear, microphones & DJ sound',
-          '[service type]': 'sound equipment',
-          '[amount]': '200.00',
+          '[Ranger Unit Name]': 'Solaris Nebula Explorers',
+          '[Rank and Last Name]': 'Captain Jaxen Drake',
+          '[Specialization Division]': 'Planetary Shielding & Escort',
+          '[Assigned Star Sector]': 'Orion Gateway Sector 7',
+          '[Vessel Class]': 'Orbital Interceptor Class-A',
+          '[amount]': '60,000',
           '[X]': '8',
           '[payout timing]': '12 hours',
-          '[is free / carries a setup fee of GHS [amount]]': 'carries a setup fee of GHS 200.00',
-          '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 8% from each paid booking',
-          '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 12 hours of the service date'
+          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'is fully subsidized by Galactic Council',
+          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 8% from each completed mission payout',
+          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 12 hours of debriefing approval'
         }
       },
       {
         id: 'rec_3',
-        label: 'Gold Coast Gourmet Catering',
+        label: 'Hyperion Void Walkers',
         replacements: {
-          '[Business Name]': 'Gold Coast Gourmet Catering',
-          '[Title and Last Name]': 'Chef Emmanuel Adjei',
-          '[service type, e.g. photography]': 'event catering and corporate banquets',
-          '[service type]': 'catering',
-          '[amount]': '0.00',
+          '[Ranger Unit Name]': 'Hyperion Void Walkers',
+          '[Rank and Last Name]': 'Lieutenant Kira Vance',
+          '[Specialization Division]': 'Asteroid Hazard Demolition',
+          '[Assigned Star Sector]': 'Proxima Centauri Alpha',
+          '[Vessel Class]': 'Quantum Dreadnought EX',
+          '[amount]': '35,000',
           '[X]': '5',
           '[payout timing]': '48 hours',
-          '[is free / carries a setup fee of GHS [amount]]': 'is free for accredited food vendors',
-          '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 5% from each paid booking',
-          '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 48 hours of the service date'
+          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 35,000 Credits',
+          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 5% from each completed mission payout',
+          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 48 hours of debriefing approval'
         }
       },
       {
         id: 'rec_4',
-        label: 'Apex Stage & Lighting',
+        label: 'Apex Orbital Vanguard',
         replacements: {
-          '[Business Name]': 'Apex Stage & Lighting Systems',
-          '[Title and Last Name]': 'Mr. Samuel Boateng',
-          '[service type, e.g. photography]': 'stage trusses, intelligent lighting and smoke effects',
-          '[service type]': 'event lighting',
-          '[amount]': '180.00',
-          '[X]': '6',
+          '[Ranger Unit Name]': 'Apex Orbital Vanguard',
+          '[Rank and Last Name]': 'Officer Jax Morgan',
+          '[Specialization Division]': 'Deep Space Communications & Relay',
+          '[Assigned Star Sector]': 'Sirius Void Sector 9',
+          '[Vessel Class]': 'Stealth Frigate SF-2',
+          '[amount]': '50,000',
+          '[X]': '7',
           '[payout timing]': '24 hours',
-          '[is free / carries a setup fee of GHS [amount]]': 'carries a setup fee of GHS 180.00',
-          '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 6% from each paid booking',
-          '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 24 hours of the service date'
+          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 50,000 Credits',
+          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 7% from each completed mission payout',
+          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 24 hours of debriefing approval'
         }
       }
     ];
@@ -285,7 +289,7 @@ export default function BatchGrid({
             }}
           >
             <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--color-secondary)' }} />
-            <span>Load 4 Sample Vendors</span>
+            <span>Load Sample Squadrons</span>
           </button>
 
           <button
@@ -390,7 +394,7 @@ export default function BatchGrid({
                   <tr
                     key={row.id}
                     className={`transition-colors ${
-                      isActive ? 'bg-sky-50/50 dark:bg-sky-950/20' : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40'
+                      isActive ? 'bg-[var(--color-primary-light)]/40' : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40'
                     }`}
                   >
                     {/* Index */}
@@ -414,7 +418,11 @@ export default function BatchGrid({
                           }}
                         />
                         {isActive && (
-                          <span className="shrink-0 p-1 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400" title="Active live preview row">
+                          <span 
+                            className="shrink-0 p-1 rounded"
+                            style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}
+                            title="Active live preview row"
+                          >
                             <Eye className="w-3.5 h-3.5" />
                           </span>
                         )}
@@ -553,7 +561,7 @@ export default function BatchGrid({
               type="text"
               value={batchTitle}
               onChange={(e) => setBatchTitle(e.target.value)}
-              placeholder="e.g. AsedaHost_Vendors_Batch_1"
+              placeholder="e.g. Vanguard_Orbital_Ranger_Batch_1"
               className="w-full text-sm px-3.5 py-2.5 rounded-xl border focus:outline-none transition-all"
               style={{
                 backgroundColor: 'var(--bg-subtle)',

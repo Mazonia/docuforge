@@ -7,6 +7,7 @@ import DocumentPreview from './components/DocumentPreview';
 import CsvImportModal from './components/CsvImportModal';
 import AddPlaceholderModal from './components/AddPlaceholderModal';
 import AboutModal from './components/AboutModal';
+import WelcomeFeatures from './components/WelcomeFeatures';
 import { 
   FileText, 
   Table, 
@@ -108,16 +109,17 @@ export default function App() {
     setTemplate(templateData);
 
     const initialReplacements = {
-      '[Business Name]': 'Studio 45 Visuals',
-      '[Title and Last Name]': 'Mr. Kwame Darko',
-      '[service type, e.g. photography]': 'photography & live streaming',
-      '[service type]': 'photography',
-      '[amount]': '150.00',
-      '[X]': '7',
+      '[Ranger Unit Name]': 'Aegis Recon Squadron 9',
+      '[Rank and Last Name]': 'Commander Valeria Cross',
+      '[Specialization Division]': 'Deep Space Plasma Interception',
+      '[Assigned Star Sector]': 'Kepler Outpost Sector 4',
+      '[Vessel Class]': 'Vanguard Hyper-Cruiser MK-IV',
+      '[amount]': '45,000',
+      '[X]': '6',
       '[payout timing]': '24 hours',
-      '[is free / carries a setup fee of GHS [amount]]': 'carries a setup fee of GHS 150.00',
-      '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 7% from each paid booking',
-      '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 24 hours of the service date'
+      '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 45,000 Credits',
+      '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 6% from each completed mission payout',
+      '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 24 hours of debriefing approval'
     };
 
     templateData.placeholders?.forEach(p => {
@@ -130,39 +132,41 @@ export default function App() {
     const initialBatch = [
       {
         id: 'rec_1',
-        label: 'Studio 45 Visuals',
+        label: 'Aegis Recon Squadron 9',
         replacements: { ...initialReplacements }
       },
       {
         id: 'rec_2',
-        label: 'SoundWave Rentals',
+        label: 'Solaris Nebula Explorers',
         replacements: {
-          '[Business Name]': 'SoundWave Sound & Rentals',
-          '[Title and Last Name]': 'Ms. Abena Osei',
-          '[service type, e.g. photography]': 'sound gear, microphones & DJ sound',
-          '[service type]': 'sound rental',
-          '[amount]': '200.00',
+          '[Ranger Unit Name]': 'Solaris Nebula Explorers',
+          '[Rank and Last Name]': 'Captain Jaxen Drake',
+          '[Specialization Division]': 'Planetary Shielding & Escort',
+          '[Assigned Star Sector]': 'Orion Gateway Sector 7',
+          '[Vessel Class]': 'Orbital Interceptor Class-A',
+          '[amount]': '60,000',
           '[X]': '8',
           '[payout timing]': '12 hours',
-          '[is free / carries a setup fee of GHS [amount]]': 'carries a setup fee of GHS 200.00',
-          '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 8% from each paid booking',
-          '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 12 hours of the service date'
+          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'is fully subsidized by Galactic Council',
+          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 8% from each completed mission payout',
+          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 12 hours of debriefing approval'
         }
       },
       {
         id: 'rec_3',
-        label: 'Gold Coast Gourmet Catering',
+        label: 'Hyperion Void Walkers',
         replacements: {
-          '[Business Name]': 'Gold Coast Gourmet Catering',
-          '[Title and Last Name]': 'Chef Emmanuel Adjei',
-          '[service type, e.g. photography]': 'event catering and corporate banquets',
-          '[service type]': 'catering',
-          '[amount]': '0.00',
+          '[Ranger Unit Name]': 'Hyperion Void Walkers',
+          '[Rank and Last Name]': 'Lieutenant Kira Vance',
+          '[Specialization Division]': 'Asteroid Hazard Demolition',
+          '[Assigned Star Sector]': 'Proxima Centauri Alpha',
+          '[Vessel Class]': 'Quantum Dreadnought EX',
+          '[amount]': '35,000',
           '[X]': '5',
           '[payout timing]': '48 hours',
-          '[is free / carries a setup fee of GHS [amount]]': 'is free for accredited food vendors',
-          '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 5% from each paid booking',
-          '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 48 hours of the service date'
+          '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 35,000 Credits',
+          '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 5% from each completed mission payout',
+          '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 48 hours of debriefing approval'
         }
       }
     ];
@@ -310,6 +314,14 @@ export default function App() {
           onReset={() => setTemplate(null)}
           onOpenAddPlaceholderModal={() => setIsAddPlaceholderOpen(true)}
         />
+
+        {/* When no template is loaded, display engaging feature capabilities & demo launcher */}
+        {!template && (
+          <WelcomeFeatures
+            onLoadDemo={handleManualLoadSample}
+            isDemoLoading={isSampleLoading}
+          />
+        )}
 
         {template && (
           <div className="space-y-6">

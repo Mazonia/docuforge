@@ -182,7 +182,7 @@ export default function CsvImportModal({ isOpen, onClose, onImport, template }) 
               rows={8}
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
-              placeholder={`Recipient Label,Business Name,Title and Last Name,service type,amount,X,payout timing\nStudio 45,Studio 45 Visuals,Mr. Kwame Darko,photography,150.00,7,24 hours\nSoundWave,SoundWave Rentals,Ms. Abena Osei,sound rental,200.00,8,12 hours`}
+              placeholder={`Recipient Label,Ranger Unit Name,Rank and Last Name,Specialization Division,amount,X,payout timing\nAegis Recon,Aegis Recon Squadron 9,Commander Valeria Cross,Deep Space Plasma Interception,45000,6,24 hours\nSolaris Nebula,Solaris Nebula Explorers,Captain Jaxen Drake,Planetary Shielding,60000,8,12 hours`}
               className="w-full text-xs font-mono p-3 rounded-xl border focus:outline-none transition-all"
               style={{
                 backgroundColor: 'var(--bg-subtle)',

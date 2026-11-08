@@ -211,7 +211,7 @@ export default function DocumentPreview({
             style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-card)' }}>
             <button
               onClick={() => setZoom(prev => Math.max(60, prev - 10))}
-              className="p-0.5 hover:text-sky-500 transition-colors"
+              className="p-0.5 hover:text-[var(--color-primary)] transition-colors"
               title="Zoom out"
             >
               <ZoomOut className="w-3 h-3" />
@@ -221,7 +221,7 @@ export default function DocumentPreview({
             </span>
             <button
               onClick={() => setZoom(prev => Math.min(140, prev + 10))}
-              className="p-0.5 hover:text-sky-500 transition-colors"
+              className="p-0.5 hover:text-[var(--color-primary)] transition-colors"
               title="Zoom in"
             >
               <ZoomIn className="w-3 h-3" />
@@ -242,7 +242,10 @@ export default function DocumentPreview({
 
       {/* Floating Selection Action: Add highlighted text as placeholder */}
       {selectedText && (
-        <div className="bg-sky-600 text-white text-xs px-3 py-1.5 flex items-center justify-between animate-in fade-in">
+        <div 
+          className="text-xs px-3 py-1.5 flex items-center justify-between animate-in fade-in"
+          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-text)' }}
+        >
           <span className="truncate max-w-[240px]">
             Selected: <code className="font-mono font-bold">"{selectedText}"</code>
           </span>

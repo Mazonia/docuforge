@@ -168,10 +168,10 @@ export default function FileDropzone({ template, onFileUpload, isUploading, onRe
       </p>
 
       <div className="mt-5 flex items-center justify-center space-x-2">
-        <span className="btn-tactile text-xs font-semibold px-4 py-2 rounded-xl inline-flex items-center space-x-1.5 shadow-sm"
+        <span className="btn-tactile text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center space-x-1.5 shadow-sm"
           style={{
             backgroundColor: 'var(--color-primary)',
-            color: '#FFFFFF'
+            color: 'var(--color-primary-text)'
           }}>
           <span>Browse File</span>
         </span>

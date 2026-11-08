@@ -109,7 +109,7 @@ export default function AddPlaceholderModal({ isOpen, onClose, onAdd, templatePa
                 type="text"
                 value={targetText}
                 onChange={(e) => setTargetText(e.target.value)}
-                placeholder="e.g. AsedaHost or East Legon, Accra"
+                placeholder="e.g. Nova Vanguard or Sector 4 Outpost"
                 className="w-full text-xs px-3.5 py-2.5 pr-8 rounded-xl border focus:outline-none transition-all font-mono"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
@@ -120,7 +120,7 @@ export default function AddPlaceholderModal({ isOpen, onClose, onAdd, templatePa
               />
               {isSearching && (
                 <div className="absolute right-3 top-3">
-                  <div className="w-3.5 h-3.5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)' }}></div>
                 </div>
               )}
             </div>

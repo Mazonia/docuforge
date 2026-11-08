@@ -12,10 +12,11 @@
     --text-muted: #94A3B8;
     
     /* Executive Palette (No Purple, No Indigo, No Violet) */
-    /* 1. Primary: Executive Precision Blue / Deep Cerulean */
-    --color-primary: #0284C7;
-    --color-primary-hover: #0369A1;
-    --color-primary-light: #E0F2FE;
+    /* 1. Primary: Vibrant Dark Turquoise #00CED1 */
+    --color-primary: #00CED1;
+    --color-primary-hover: #00B8BB;
+    --color-primary-light: #E0FAFA;
+    --color-primary-text: #0B1E24;
     
     /* 2. Secondary: Precision Forest Jade / Emerald */
     --color-secondary: #059669;
@@ -41,9 +42,10 @@
     --text-muted: #64748B;
     
     /* Executive Palette (Dark Mode) */
-    --color-primary: #38BDF8;
-    --color-primary-hover: #0284C7;
-    --color-primary-light: rgba(56, 189, 248, 0.15);
+    --color-primary: #00CED1;
+    --color-primary-hover: #2EE5E8;
+    --color-primary-light: rgba(0, 206, 209, 0.16);
+    --color-primary-text: #05161C;
     
     --color-secondary: #10B981;
     --color-secondary-hover: #059669;

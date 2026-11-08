@@ -124,7 +124,7 @@ export default function AboutModal({ isOpen, onClose }) {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-3 px-3.5 border-b-2 flex items-center space-x-2 transition-all cursor-pointer whitespace-nowrap ${
-                  isActive ? 'border-sky-500' : 'border-transparent opacity-70 hover:opacity-100'
+                  isActive ? 'opacity-100 font-bold' : 'opacity-70 hover:opacity-100'
                 }`}
                 style={{
                   color: isActive ? 'var(--color-primary)' : 'var(--text-secondary)',
@@ -393,7 +393,7 @@ export default function AboutModal({ isOpen, onClose }) {
                     <li>• <strong>React 18 & Vite</strong>: Instant reactive state management.</li>
                     <li>• <strong>Tailwind CSS</strong>: High-density executive design system.</li>
                     <li>• <strong>Lucide Icons</strong>: Clean, lightweight iconset.</li>
-                    <li>• <strong>Executive Color System</strong>: Cerulean (#0284C7), Jade (#059669), Amber (#D97706).</li>
+                    <li>• <strong>Color System</strong>: Vibrant Dark Turquoise (#00CED1), Forest Jade (#059669), Ochre Amber (#D97706).</li>
                     <li>• <strong>Dual Theme Engine</strong>: Persistent Dark & Light modes.</li>
                   </ul>
                 </div>

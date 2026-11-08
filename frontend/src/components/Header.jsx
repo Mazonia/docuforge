@@ -13,7 +13,7 @@ export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, 
         {/* Brand */}
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-xs"
-            style={{ backgroundColor: 'var(--color-primary)', color: '#FFFFFF' }}>
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-text)' }}>
             <FileText className="w-5 h-5 stroke-[2.2]" />
           </div>
           <div>

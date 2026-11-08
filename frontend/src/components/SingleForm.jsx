@@ -24,7 +24,7 @@ export default function SingleForm({
   onOpenFolder,
   onOpenAddPlaceholderModal
 }) {
-  const [docTitle, setDocTitle] = useState('AsedaHost Proposal - Kofi Shots');
+  const [docTitle, setDocTitle] = useState('Vanguard Mission - Aegis Recon');
   const [format, setFormat] = useState('both');
   const [showSnippets, setShowSnippets] = useState({});
   const [conditionalModes, setConditionalModes] = useState({});
@@ -35,9 +35,8 @@ export default function SingleForm({
   useEffect(() => {
     placeholders.forEach(field => {
       if (field.is_conditional && conditionalModes[field.raw] === 'option_1') {
-        // Linked to option with amount
-        const amountVal = replacements['[amount]'] || '150.00';
-        const formatted = `carries a setup fee of GHS ${amountVal}`;
+        const amountVal = replacements['[amount]'] || '45,000';
+        const formatted = `carries an auxiliary warp-cell surcharge of ${amountVal} Credits`;
         if (replacements[field.raw] !== formatted) {
           setReplacements(prev => ({ ...prev, [field.raw]: formatted }));
         }
@@ -45,54 +44,57 @@ export default function SingleForm({
     });
   }, [replacements['[amount]'], conditionalModes]);
 
-  // Built-in presets
+  // Built-in Space Ranger Presets
   const presets = [
     {
-      name: 'Studio 45 Photography',
-      title: 'Proposal - Studio 45 Visuals',
+      name: 'Aegis Recon Squadron 9',
+      title: 'Vanguard Assignment - Aegis Recon Squadron 9',
       data: {
-        '[Business Name]': 'Studio 45 Visuals',
-        '[Title and Last Name]': 'Mr. Kwame Darko',
-        '[service type, e.g. photography]': 'photography & live streaming',
-        '[service type]': 'photography',
-        '[amount]': '150.00',
-        '[X]': '7',
+        '[Ranger Unit Name]': 'Aegis Recon Squadron 9',
+        '[Rank and Last Name]': 'Commander Valeria Cross',
+        '[Specialization Division]': 'Deep Space Plasma Interception',
+        '[Assigned Star Sector]': 'Kepler Outpost Sector 4',
+        '[Vessel Class]': 'Vanguard Hyper-Cruiser MK-IV',
+        '[amount]': '45,000',
+        '[X]': '6',
         '[payout timing]': '24 hours',
-        '[is free / carries a setup fee of GHS [amount]]': 'carries a setup fee of GHS 150.00',
-        '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 7% from each paid booking',
-        '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 24 hours of the service date'
+        '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 45,000 Credits',
+        '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 6% from each completed mission payout',
+        '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 24 hours of debriefing approval'
       }
     },
     {
-      name: 'SoundWave Rentals (DJ & Sound)',
-      title: 'Proposal - SoundWave Rentals',
+      name: 'Solaris Nebula Explorers',
+      title: 'Vanguard Assignment - Solaris Nebula Explorers',
       data: {
-        '[Business Name]': 'SoundWave Sound & Stage Rentals',
-        '[Title and Last Name]': 'Ms. Abena Osei',
-        '[service type, e.g. photography]': 'sound equipment, PA systems & DJ',
-        '[service type]': 'sound rental',
-        '[amount]': '250.00',
+        '[Ranger Unit Name]': 'Solaris Nebula Explorers',
+        '[Rank and Last Name]': 'Captain Jaxen Drake',
+        '[Specialization Division]': 'Planetary Shielding & Escort',
+        '[Assigned Star Sector]': 'Orion Gateway Sector 7',
+        '[Vessel Class]': 'Orbital Interceptor Class-A',
+        '[amount]': '60,000',
         '[X]': '8',
         '[payout timing]': '12 hours',
-        '[is free / carries a setup fee of GHS [amount]]': 'carries a setup fee of GHS 250.00',
-        '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 8% from each paid booking',
-        '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 12 hours of the service date'
+        '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'is fully subsidized by Galactic Council',
+        '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 8% from each completed mission payout',
+        '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 12 hours of debriefing approval'
       }
     },
     {
-      name: 'Royal Palm Gourmet Catering',
-      title: 'Proposal - Royal Palm Catering',
+      name: 'Hyperion Void Walkers',
+      title: 'Vanguard Assignment - Hyperion Void Walkers',
       data: {
-        '[Business Name]': 'Royal Palm Gourmet Catering',
-        '[Title and Last Name]': 'Chef Emmanuel Adjei',
-        '[service type, e.g. photography]': 'event catering and corporate banquets',
-        '[service type]': 'catering',
-        '[amount]': '0.00',
+        '[Ranger Unit Name]': 'Hyperion Void Walkers',
+        '[Rank and Last Name]': 'Lieutenant Kira Vance',
+        '[Specialization Division]': 'Asteroid Hazard Demolition',
+        '[Assigned Star Sector]': 'Proxima Centauri Alpha',
+        '[Vessel Class]': 'Quantum Dreadnought EX',
+        '[amount]': '35,000',
         '[X]': '5',
         '[payout timing]': '48 hours',
-        '[is free / carries a setup fee of GHS [amount]]': 'is free for accredited food vendors',
-        '[deducts a service fee of [X]% from each paid booking]': 'deducts a service fee of 5% from each paid booking',
-        '[by mobile money or bank transfer, within [payout timing] of the service date]': 'by mobile money or bank transfer, within 48 hours of the service date'
+        '[is fully subsidized by Galactic Council / carries an auxiliary warp-cell surcharge of [amount] Credits]': 'carries an auxiliary warp-cell surcharge of 35,000 Credits',
+        '[deducts a spaceport logistics fee of [X]% from each completed mission payout]': 'deducts a spaceport logistics fee of 5% from each completed mission payout',
+        '[by quantum hyper-relay or sub-space credit transfer, within [payout timing] of debriefing approval]': 'by quantum hyper-relay or sub-space credit transfer, within 48 hours of debriefing approval'
       }
     }
   ];
@@ -233,7 +235,7 @@ export default function SingleForm({
               type="text"
               value={docTitle}
               onChange={(e) => setDocTitle(e.target.value)}
-              placeholder="e.g. AsedaHost Proposal - Kofi Shots"
+              placeholder="e.g. Vanguard Assignment - Aegis Recon"
               className="w-full text-sm px-3.5 py-2.5 rounded-xl border focus:outline-none transition-all"
               style={{
                 backgroundColor: 'var(--bg-subtle)',
