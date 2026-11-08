@@ -59,15 +59,6 @@ export default function AboutModal({ isOpen, onClose }) {
                 <h3 className="text-base font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                   About DocuForge Studio
                 </h3>
-                <span 
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
-                  style={{
-                    backgroundColor: 'var(--color-primary-light)',
-                    color: 'var(--color-primary)'
-                  }}
-                >
-                  v1.0 Pro
-                </span>
               </div>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 High-fidelity Word & PDF automated templating and batch generation engine.

@@ -674,20 +674,26 @@ def render_html_preview(
         style_name = p.style.name if p.style else "Normal"
         is_heading = "heading" in style_name.lower() or "title" in style_name.lower()
 
-        rendered_text = txt
+        rendered_text = (
+            txt.replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;')
+        )
         for raw_k, val in sorted_reps:
-            if raw_k in rendered_text:
+            if raw_k in txt:
                 clean_val = str(val).strip() if val is not None else ""
                 if signature_data_url and any(w in raw_k.lower() for w in ["signature", "stamp"]):
-                    sig_html = f'<img src="{signature_data_url}" alt="Digital Signature" class="inline-block h-8 max-w-[140px] border-b border-dashed border-teal-500 align-middle my-1" />'
-                    rendered_text = rendered_text.replace(raw_k, sig_html)
+                    # Ensure signature_data_url is a genuine data image URL
+                    if signature_data_url.startswith("data:image/"):
+                        sig_html = f'<img src="{signature_data_url}" alt="Digital Signature" class="inline-block h-8 max-w-[140px] border-b border-dashed border-teal-500 align-middle my-1" />'
+                        rendered_text = rendered_text.replace(raw_k, sig_html)
                 elif clean_val:
                     escaped_val = (
                         clean_val.replace('&', '&amp;')
                         .replace('<', '&lt;')
                         .replace('>', '&gt;')
                     )
-                    safe_key = raw_k.replace('[', '').replace(']', '')[:25]
+                    safe_key = re.sub(r'[^a-zA-Z0-9_-]', '', raw_k)[:25]
                     rendered_text = rendered_text.replace(
                         raw_k,
                         f'<span class="doc-filled" data-key="{safe_key}">{escaped_val}</span>'

@@ -50,10 +50,38 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-os.makedirs(SAMPLES_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(UPLOADS_DIR, exist_ok=True)
-os.makedirs(STATIC_DIR, exist_ok=True)
+# Safe workspace roots
+ALLOWED_ROOTS = [
+    os.path.abspath(BASE_DIR),
+    os.path.abspath(OUTPUT_DIR),
+    os.path.abspath(UPLOADS_DIR),
+    os.path.abspath(SAMPLES_DIR)
+]
+
+
+def is_safe_path(path: str, allowed_dirs: Optional[List[str]] = None) -> bool:
+    """Verifies that an absolute or relative path resides strictly inside authorized directories."""
+    if not path:
+        return False
+    try:
+        resolved = os.path.abspath(path)
+        roots = allowed_dirs or ALLOWED_ROOTS
+        for root in roots:
+            root_abs = os.path.abspath(root)
+            if resolved == root_abs or resolved.startswith(root_abs + os.sep):
+                return True
+        return False
+    except Exception:
+        return False
+
+
+def validate_file_path(path: str, allowed_dirs: Optional[List[str]] = None) -> str:
+    """Validates path safety and existence, raising HTTPException if untrusted or non-existent."""
+    if not path or not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File path does not exist.")
+    if not is_safe_path(path, allowed_dirs):
+        raise HTTPException(status_code=403, detail="Access denied: Path is outside permitted workspace roots.")
+    return os.path.abspath(path)
 
 
 class GenerateSingleRequest(BaseModel):
@@ -149,20 +177,32 @@ def list_samples():
 async def upload_document(file: UploadFile = File(...)):
     """
     Receives an uploaded DOCX or PDF file.
+    Validates file extension and size (max 50MB) for robust security.
     If PDF, converts it to DOCX first, then extracts all placeholders.
     """
-    filename = file.filename
+    filename = file.filename or ""
     clean_name = os.path.basename(filename)
-    dest_path = os.path.join(UPLOADS_DIR, clean_name)
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Invalid filename provided.")
 
+    ext = os.path.splitext(clean_name)[1].lower()
+    if ext not in [".docx", ".pdf"]:
+        raise HTTPException(status_code=400, detail="Unsupported file format. Please upload a .docx or .pdf template.")
+
+    # Read with size limit (max 50 MB)
+    MAX_SIZE = 50 * 1024 * 1024
     content = await file.read()
+    if len(content) > MAX_SIZE:
+        raise HTTPException(status_code=413, detail="File too large. Maximum template size is 50MB.")
+
+    dest_path = os.path.join(UPLOADS_DIR, clean_name)
     with open(dest_path, "wb") as f:
         f.write(content)
 
     # If PDF, convert to DOCX
     final_docx_path = dest_path
     converted_from_pdf = False
-    if clean_name.lower().endswith(".pdf"):
+    if ext == ".pdf":
         docx_name = os.path.splitext(clean_name)[0] + ".docx"
         final_docx_path = os.path.join(UPLOADS_DIR, docx_name)
         convert_pdf_to_docx(dest_path, final_docx_path)
@@ -178,30 +218,28 @@ async def upload_document(file: UploadFile = File(...)):
 
 @app.post("/api/scan")
 def scan_existing_path(path_data: Dict[str, str]):
-    """Scans a template from a local file path."""
-    path = path_data.get("path")
-    if not path or not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="File path not found.")
+    """Scans a template from a local file path with safety validation."""
+    path = path_data.get("path", "")
+    safe_path = validate_file_path(path)
 
-    if path.lower().endswith(".pdf"):
-        docx_path = os.path.splitext(path)[0] + "_converted.docx"
-        convert_pdf_to_docx(path, docx_path)
+    if safe_path.lower().endswith(".pdf"):
+        docx_path = os.path.splitext(safe_path)[0] + "_converted.docx"
+        convert_pdf_to_docx(safe_path, docx_path)
         scan_data = scan_docx_template(docx_path)
         scan_data["converted_from_pdf"] = True
         return scan_data
 
-    scan_data = scan_docx_template(path)
+    scan_data = scan_docx_template(safe_path)
     return scan_data
 
 
 @app.post("/api/preview")
 def preview_document(req: PreviewRequest):
     """Renders structured document preview with highlighted/replaced placeholders."""
-    if not os.path.exists(req.template_path):
-        raise HTTPException(status_code=404, detail="Template path does not exist.")
+    safe_template = validate_file_path(req.template_path)
 
     elements = render_html_preview(
-        req.template_path,
+        safe_template,
         req.replacements or {},
         hidden_clauses=req.hidden_clauses,
         signature_data_url=req.signature_data_url
@@ -215,8 +253,7 @@ def render_doc_preview(req: PreviewRequest):
     Renders actual authentic Word-generated PDF pages as high-resolution images
     for realistic document print & distribution preview before download.
     """
-    if not os.path.exists(req.template_path):
-        raise HTTPException(status_code=404, detail="Template path does not exist.")
+    safe_template = validate_file_path(req.template_path)
 
     cache_dir = os.path.join(OUTPUT_DIR, "_preview_cache")
     os.makedirs(cache_dir, exist_ok=True)
@@ -225,7 +262,7 @@ def render_doc_preview(req: PreviewRequest):
 
     try:
         generate_document(
-            req.template_path,
+            safe_template,
             preview_docx,
             req.replacements or {},
             signature_data_url=req.signature_data_url,
@@ -249,20 +286,28 @@ def check_text(data: Dict[str, str]):
     Validates if an exact word or sentence exists in the template document,
     enabling users to add custom placeholders without needing brackets.
     """
-    path = data.get("path")
+    path = data.get("path", "")
     query = data.get("query", "").strip()
-    if not path or not os.path.exists(path) or not query:
-        raise HTTPException(status_code=400, detail="Path and search query are required.")
+    if not query:
+        raise HTTPException(status_code=400, detail="Search query is required.")
 
-    result = find_text_in_docx(path, query)
+    safe_path = validate_file_path(path)
+    result = find_text_in_docx(safe_path, query)
     return result
 
 
 
 def clean_filename(name: str) -> str:
-    """Sanitizes string for valid filesystem file names."""
+    """Sanitizes string for valid and safe filesystem file names across Windows and Unix."""
+    if not name:
+        return "Document"
+    # Disallow Windows reserved names (CON, PRN, AUX, NUL, COM1-9, LPT1-9)
+    reserved = {"con", "prn", "aux", "nul"} | {f"com{i}" for i in range(1, 10)} | {f"lpt{i}" for i in range(1, 10)}
     keepchars = (' ', '.', '_', '-')
-    return "".join(c for c in name if c.isalnum() or c in keepchars).strip()
+    cleaned = "".join(c for c in name if c.isalnum() or c in keepchars).strip(" .")
+    if not cleaned or cleaned.lower() in reserved:
+        return "DocuForge_Document"
+    return cleaned[:100]
 
 
 @app.post("/api/generate/single")
@@ -270,15 +315,14 @@ def generate_single(req: GenerateSingleRequest):
     """
     Generates a single customized document in DOCX and/or PDF.
     """
-    if not os.path.exists(req.template_path):
-        raise HTTPException(status_code=404, detail="Template does not exist.")
+    safe_template = validate_file_path(req.template_path)
 
     safe_title = clean_filename(req.doc_title or "Custom_Document")
     base_out_name = f"{safe_title}"
 
     docx_out_path = os.path.join(OUTPUT_DIR, f"{base_out_name}.docx")
     generate_document(
-        req.template_path,
+        safe_template,
         docx_out_path,
         req.replacements,
         signature_data_url=req.signature_data_url,
@@ -313,8 +357,7 @@ def generate_batch(req: GenerateBatchRequest):
     Batch generates documents for multiple clients/records.
     Generates individual DOCX and/or PDF for each record, then creates a ZIP.
     """
-    if not os.path.exists(req.template_path):
-        raise HTTPException(status_code=404, detail="Template does not exist.")
+    safe_template = validate_file_path(req.template_path)
 
     batch_slug = clean_filename(req.batch_title or "DocuForge_Batch")
     batch_dir = os.path.join(OUTPUT_DIR, batch_slug)
@@ -327,7 +370,6 @@ def generate_batch(req: GenerateBatchRequest):
         # Determine filename identifier
         client_label = rec.label.strip() if rec.label else ""
         if not client_label:
-            # Check if replacements has Business Name or Name
             for k, v in rec.replacements.items():
                 if any(w in k.lower() for w in ["business name", "client name", "name"]):
                     if v and str(v).strip():
@@ -343,7 +385,7 @@ def generate_batch(req: GenerateBatchRequest):
         sig = rec.signature_data_url or req.global_signature
         rec_hidden = rec.hidden_clauses or req.hidden_clauses
         generate_document(
-            req.template_path,
+            safe_template,
             docx_file,
             rec.replacements,
             signature_data_url=sig,
@@ -365,7 +407,10 @@ def generate_batch(req: GenerateBatchRequest):
             "id": rec.id,
             "label": client_label,
             "docx": os.path.basename(docx_file),
-            "pdf": os.path.basename(pdf_file) if pdf_file else None
+            "docx_path": docx_file,
+            "pdf": os.path.basename(pdf_file) if pdf_file else None,
+            "pdf_path": pdf_file,
+            "replacements": rec.replacements
         })
 
     # Create ZIP bundle
@@ -389,10 +434,13 @@ def generate_batch(req: GenerateBatchRequest):
 
 @app.post("/api/open-output-folder")
 def open_output_folder(data: Optional[Dict[str, str]] = None):
-    """Opens the generated files folder in Windows Explorer."""
+    """Opens the generated files folder in Windows Explorer securely."""
     target_dir = OUTPUT_DIR
-    if data and data.get("path") and os.path.exists(data.get("path")):
-        target_dir = data.get("path")
+    if data and data.get("path"):
+        requested = data.get("path")
+        # Restrict folder opening strictly to OUTPUT_DIR or subfolders
+        if is_safe_path(requested, allowed_dirs=[OUTPUT_DIR]) and os.path.exists(requested):
+            target_dir = requested
 
     try:
         os.startfile(target_dir)
@@ -401,23 +449,26 @@ def open_output_folder(data: Optional[Dict[str, str]] = None):
         raise HTTPException(status_code=500, detail=f"Failed to open folder: {str(e)}")
 
 
-@app.get("/api/download/{filename}")
+@app.get("/api/download/{filename:path}")
 def download_file(filename: str):
-    """Downloads a generated file from OUTPUT_DIR."""
-    clean_name = os.path.basename(urllib.parse.unquote(filename))
-    filepath = os.path.join(OUTPUT_DIR, clean_name)
+    """Downloads a generated file safely from OUTPUT_DIR."""
+    decoded = urllib.parse.unquote(filename).split("?")[0]
+    norm_path = os.path.normpath(decoded).lstrip("\\/")
+    candidate = os.path.abspath(os.path.join(OUTPUT_DIR, norm_path))
 
-    # Check root output or subdirectories
-    if not os.path.exists(filepath):
-        # Search subdirectories
+    if not is_safe_path(candidate, allowed_dirs=[OUTPUT_DIR]) or not os.path.isfile(candidate):
+        # Fallback search by basename inside OUTPUT_DIR
+        clean_name = os.path.basename(decoded)
+        found = None
         for root, dirs, files in os.walk(OUTPUT_DIR):
             if clean_name in files:
-                filepath = os.path.join(root, clean_name)
+                found = os.path.join(root, clean_name)
                 break
+        if not found or not os.path.isfile(found):
+            raise HTTPException(status_code=404, detail="Requested file not found.")
+        candidate = found
 
-    if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="File not found.")
-
+    clean_name = os.path.basename(candidate)
     media_type = "application/octet-stream"
     if clean_name.endswith(".pdf"):
         media_type = "application/pdf"
@@ -427,7 +478,7 @@ def download_file(filename: str):
         media_type = "application/zip"
 
     return FileResponse(
-        filepath,
+        candidate,
         media_type=media_type,
         filename=clean_name
     )
@@ -437,34 +488,31 @@ def download_file(filename: str):
 def view_pdf_inline(filename: str):
     """
     Renders generated PDF with inline Content-Disposition so modern browsers open
-    their native high-fidelity PDF viewer directly instead of a download or pretty-print dialog.
+    their native high-fidelity PDF viewer directly with path traversal protection.
     """
     decoded = urllib.parse.unquote(filename).split("?")[0]
-    clean_name = os.path.basename(decoded)
+    norm_path = os.path.normpath(decoded).lstrip("\\/")
+    candidate = os.path.abspath(os.path.join(OUTPUT_DIR, norm_path))
 
-    # 1. Direct check in OUTPUT_DIR
-    filepath = os.path.join(OUTPUT_DIR, clean_name)
-
-    # 2. Check relative subpath (e.g. _preview_cache/preview.pdf or batch dirs)
-    rel_path = decoded.replace("/", os.sep).replace("\\", os.sep)
-    candidate = os.path.join(OUTPUT_DIR, rel_path)
-    if os.path.exists(candidate) and os.path.isfile(candidate):
-        filepath = candidate
-    elif not os.path.exists(filepath):
+    if not is_safe_path(candidate, allowed_dirs=[OUTPUT_DIR]) or not os.path.isfile(candidate):
+        clean_name = os.path.basename(decoded)
+        found = None
         for root, dirs, files in os.walk(OUTPUT_DIR):
             if clean_name in files:
-                filepath = os.path.join(root, clean_name)
+                found = os.path.join(root, clean_name)
                 break
+        if not found or not os.path.isfile(found):
+            raise HTTPException(status_code=404, detail="PDF document not found.")
+        candidate = found
 
-    if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="PDF document not found.")
-
+    clean_name = os.path.basename(candidate)
     return FileResponse(
-        filepath,
+        candidate,
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'inline; filename="{clean_name}"',
-            "Cache-Control": "no-cache"
+            "Cache-Control": "no-cache",
+            "X-Content-Type-Options": "nosniff"
         }
     )
 
@@ -472,11 +520,10 @@ def view_pdf_inline(filename: str):
 @app.post("/api/send-email")
 def send_email_dispatch(req: EmailDispatchRequest):
     """
-    Sends an email with an attached PDF document through SMTP (TLS / SSL / Plain).
-    Zero cloud vendor lock-in; works with Gmail App Passwords, SendGrid, Mailgun, Outlook, or private SMTP.
+    Sends an email with an attached PDF document through SMTP.
+    Validates attachment path strictly to prevent arbitrary local file exfiltration.
     """
-    if not os.path.exists(req.attachment_path):
-        raise HTTPException(status_code=404, detail="Attachment file does not exist.")
+    safe_attachment = validate_file_path(req.attachment_path, allowed_dirs=[OUTPUT_DIR, UPLOADS_DIR])
 
     try:
         msg = EmailMessage()
@@ -486,9 +533,9 @@ def send_email_dispatch(req: EmailDispatchRequest):
         msg.set_content(req.body)
 
         # Attach file
-        with open(req.attachment_path, "rb") as f:
+        with open(safe_attachment, "rb") as f:
             file_data = f.read()
-            file_name = os.path.basename(req.attachment_path)
+            file_name = os.path.basename(safe_attachment)
 
         maintype = "application"
         subtype = "pdf" if file_name.endswith(".pdf") else "octet-stream"

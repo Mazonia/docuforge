@@ -199,7 +199,45 @@ export default function WelcomeFeatures({ onLoadDemo, isDemoLoading }) {
               100% Offline & Private
             </h4>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              No cloud AI tokens, no external telemetry, and no data leaving your machine. All parsing, document editing, and PDF exports run strictly on your local localhost.
+              No cloud AI tokens, no external telemetry, and no data leaving your machine. All parsing, document editing, and PDF exports run strictly on your local machine.
+            </p>
+          </div>
+
+          {/* Card 7 */}
+          <div 
+            className="rounded-2xl border p-5 space-y-2.5 transition-all shadow-xs hover:border-[var(--color-primary)]"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
+          >
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-xs"
+              style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}
+            >
+              <ShieldCheck className="w-5 h-5 stroke-[2]" />
+            </div>
+            <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+              Digital Signatures & SMTP Dispatch
+            </h4>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              Draw or upload signature stamps that embed cleanly into Word tables and PDF pages, then review and dispatch personalized documents directly to client inboxes via local SMTP.
+            </p>
+          </div>
+
+          {/* Card 8 */}
+          <div 
+            className="rounded-2xl border p-5 space-y-2.5 transition-all shadow-xs hover:border-[var(--color-primary)]"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
+          >
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-xs"
+              style={{ backgroundColor: 'var(--color-secondary-light)', color: 'var(--color-secondary)' }}
+            >
+              <FileCheck2 className="w-5 h-5 stroke-[2]" />
+            </div>
+            <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+              Formulas & Page Budget Guard
+            </h4>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              Click to calculate arithmetic and financial fields across all rows. Real-time page budget guard alerts you whenever text inputs overflow beyond your target page budget.
             </p>
           </div>
 

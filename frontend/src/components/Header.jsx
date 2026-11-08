@@ -30,10 +30,6 @@ export default function Header({
               <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--text-primary)' }}>
                 DocuForge Studio
               </span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}>
-                v1.0 Pro
-              </span>
             </div>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Template Engine & Multi-Client Batch Studio

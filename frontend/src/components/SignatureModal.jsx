@@ -85,6 +85,10 @@ export default function SignatureModal({ isOpen, onClose, onSave, currentSignatu
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Signature image must be under 5MB.");
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (evt) => {
         setUploadedPreview(evt.target.result);
@@ -265,3 +269,4 @@ export default function SignatureModal({ isOpen, onClose, onSave, currentSignatu
     </div>
   );
 }
+

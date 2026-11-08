@@ -67,6 +67,15 @@ export default function EmailDispatchModal({
         body = body.replaceAll(`[${k}]`, String(v || ""));
       }
 
+      const pdfTarget = rec.pdf_path || rec.pdf;
+      if (!pdfTarget) {
+        setStatusLog((prev) => [
+          ...prev,
+          { id: rec.id, label: rec.label, success: false, msg: "Skipped: Document PDF not yet generated." },
+        ]);
+        continue;
+      }
+
       try {
         const res = await fetch("/api/send-email", {
           method: "POST",
@@ -80,7 +89,7 @@ export default function EmailDispatchModal({
             to_email: toEmail,
             subject: subject,
             body: body,
-            attachment_path: rec.pdf_path || rec.pdf,
+            attachment_path: pdfTarget,
           }),
         });
         const data = await res.json();
@@ -149,7 +158,7 @@ export default function EmailDispatchModal({
                 <input
                   type="text"
                   value={smtpHost}
-                  onChange={(e) => setSmtHost(e.target.value)}
+                  onChange={(e) => setSmtpHost(e.target.value)}
                   placeholder="e.g. smtp.gmail.com"
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:border-[#00CED1] outline-none"
                 />
@@ -272,3 +281,4 @@ export default function EmailDispatchModal({
     </div>
   );
 }
+

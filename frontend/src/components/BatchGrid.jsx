@@ -310,7 +310,7 @@ export default function BatchGrid({
       <EmailDispatchModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
-        records={batchResult?.records || rows}
+        records={batchResult?.records && batchResult.records.length > 0 ? batchResult.records : rows}
       />
 
       <SignatureModal
