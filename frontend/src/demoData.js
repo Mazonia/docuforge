@@ -57,3 +57,4 @@ export const DEMO_TEMPLATE = {
     { is_heading: false, text: "Authorized Squadron Signature Anchor: [Signature]" }
   ]
 };
+
