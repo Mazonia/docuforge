@@ -1,9 +1,16 @@
 # DocuForge Studio ⚡
 ### High-Performance Word (.docx) & PDF Template Engine with Multi-Client Batch Studio
 
+[![Deploy to GitHub Pages](https://github.com/Mazonia/docuforge/actions/workflows/pages.yml/badge.svg)](https://github.com/Mazonia/docuforge/actions/workflows/pages.yml)
+[![Live Demo on GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-00CED1?style=for-the-badge&logo=github)](https://mazonia.github.io/docuforge/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-059669?style=for-the-badge)](./LICENSE)
+
 DocuForge Studio is a high-performance document automation workspace designed for businesses, law firms, and agencies that prepare tailored proposals, agreements, contracts, and quotes from Microsoft Word (`.docx`) and PDF templates.
 
 It replaces fragile legacy Mail Merge tools with **run-safe OpenXML AST substitution**, **margin-locked coordinate preservation**, and **native Microsoft Word COM automation** for pixel-perfect PDF export with zero layout drift.
+
+🌐 **Try the interactive online demo directly in your browser:**  
+**[https://mazonia.github.io/docuforge/](https://mazonia.github.io/docuforge/)**
 
 ---
 
@@ -18,41 +25,43 @@ It replaces fragile legacy Mail Merge tools with **run-safe OpenXML AST substitu
    - Highlight any word or sentence in the live document preview to immediately summon a dark turquoise tag pill: `Turn into Placeholder`.
    - Instantly converts the selected phrase into a dynamic variable without having to re-edit the source Word document or manually type brackets.
 
-3. **Auto-Calculated Math & Financial Fields**:
-   - Dedicated "Calculate Formulas" (Single Form) and "Calculate All Formulas" (Batch Grid) buttons.
-   - Safely computes sub-totals (`[Hours] * [Hourly Rate]`), logistics fees, taxes, and grand totals automatically without unsafe code evaluation.
+3. **Selective Formula & Field Calculator Modal**:
+   - Dedicated "Calculate Formulas" modal with field-specific targeting (Base Amount, Modifier / Fee %, and Target Field).
+   - Prompts users when calculations have already been applied once to prevent accidental compounding.
+   - Computes percentages, surcharges, fee deductions, and multiplication products cleanly.
 
-4. **Dynamic Date & Currency Formatters**:
+4. **Tri-Mode Document Previews**:
+   - **`Live Markup`**: Real-time reactive preview with user values filled into variables and highlighted tags.
+   - **`Raw Template`**: View the original unmodified source template with initial bracket variables intact for direct before-and-after comparison.
+   - **`Realistic Word / PDF`**: 130 DPI authentic print rendering via Microsoft Word COM with genuine page breaks, inline PDF viewer, and page budget warning alerts.
+
+5. **Dynamic Date & Currency Formatters**:
    - Built-in formatting filters:
      - `currency:USD`, `currency:GHS`, `currency:EUR`, `currency:GBP`, `currency:CREDITS`.
      - `words`: Converts numeric amounts to formal written English words (e.g. `45,000` $\rightarrow$ *"Forty-Five Thousand"*).
      - Standardized date formatting (`date:long`, `date:iso`).
 
-5. **Smart Conditional Paragraph & Clause Guards**:
+6. **Smart Conditional Paragraph & Clause Guards**:
    - Interactive toggle switches allow users to selectively include or strike out entire optional paragraphs or legal clauses (such as warranty terms or auxiliary fee clauses) before generating final Word and PDF files.
 
-6. **Page Budget Guard**:
+7. **Page Budget Guard**:
    - Set a target page count (e.g., 2 pages). Real-time page budget counter in the realistic Word/PDF preview alerts you immediately if text inputs push the document over budget.
 
-7. **Email Dispatch Modal & Local SMTP Integration**:
+8. **Email Dispatch Modal & Local SMTP Integration**:
    - Review and send generated personalized PDFs directly to client inboxes with custom subject lines and bodies containing dynamic placeholder variables.
    - Uses local standard SMTP (TLS/SSL/Plain) with zero cloud vendor lock-in.
 
-8. **Digital Signature Placeholder Anchor (`[Signature]` / `[Company Stamp]`)**:
+9. **Digital Signature Placeholder Anchor (`[Signature]` / `[Company Stamp]`)**:
    - Interactive HTML5 canvas with stylus and touch support to draw signatures, plus a transparent PNG upload tab.
    - Automatically embeds vector-clean signatures into Word tables and PDF pages directly replacing the placeholder anchor without shifting borders or margins.
 
-9. **Multi-Template Workspace Drawer**:
-   - Switch between preset templates (e.g., *Nova Vanguard Space Ranger Contract*) or custom uploads while retaining all recipient matrix rows, formulas, and digital signatures in the active session.
-
-10. **Dual Previews (Interactive Live Markup & Realistic Word COM)**:
-    - **Live Markup View**: Real-time reactive token substitution with visual tag highlighting.
-    - **Realistic Word / PDF View**: High-resolution 130 DPI rasterized pages rendered via Microsoft Word COM with inline native browser viewing.
+10. **Multi-Template Workspace Drawer**:
+    - Switch between preset templates (e.g., *Nova Vanguard Space Ranger Contract*) or custom uploads while retaining all recipient matrix rows, formulas, and digital signatures in the active session.
 
 11. **Multi-Client Tabular Matrix (Batch Studio)**:
     - Responsive spreadsheet grid where rows correlate to individual clients so data is never cross-contaminated.
     - Direct **Copy & Paste** support from Microsoft Excel and Google Sheets.
-    - **Export CSV Template** and **Import CSV / TSV** parser.
+    - **Export CSV Template** and **Import CSV / TSV** parser with UTF-8 BOM resilience and RFC 4180 multi-line quote handling.
     - One-click batch generation packaged into an organized `.zip` bundle.
 
 12. **Enterprise Security & Offline Privacy**:
@@ -72,7 +81,7 @@ DocuForge is built with search and generative engine indexing in mind:
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Local Setup with Full Word COM)
 
 ### 1. Requirements
 - Windows 10/11 with Python 3.10+
@@ -92,16 +101,27 @@ Open your browser at **`http://127.0.0.1:8000`**.
 
 ---
 
+## 🌐 Online Demo (GitHub Pages)
+
+Experience DocuForge Studio directly in any modern browser without installing local dependencies:
+👉 **[https://mazonia.github.io/docuforge/](https://mazonia.github.io/docuforge/)**
+
+---
+
 ## 📁 Repository Structure
 
 ```
 docuforge/
+├── .github/
+│   └── workflows/
+│       └── pages.yml        # Automated GitHub Pages CI/CD workflow
 ├── backend/
 │   ├── main.py              # FastAPI REST server & path-safe inline PDF viewer
 │   ├── processor.py         # Run-safe XML engine, bracket scanner, Word COM export
 │   ├── samples/             # Bundled templates (Nova Vanguard Space Ranger Contract)
 │   ├── output/              # Generated DOCX, PDF, and ZIP archives
 │   └── static/              # Production React SPA build
+├── docs/                    # GitHub Pages production deployment root
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -110,12 +130,14 @@ docuforge/
 │   │   │   ├── FileDropzone.jsx        # Template upload for DOCX and PDF
 │   │   │   ├── SingleForm.jsx          # Single document form with formula calculator & clauses
 │   │   │   ├── BatchGrid.jsx           # Multi-client spreadsheet grid with batch formulas & email
-│   │   │   ├── DocumentPreview.jsx     # Interactive live & realistic Word/PDF preview with budget guard
-│   │   │   ├── CsvImportModal.jsx      # CSV/Excel batch data importer
+│   │   │   ├── DocumentPreview.jsx     # Interactive live, raw & realistic preview with budget guard
+│   │   │   ├── CsvImportModal.jsx      # CSV/Excel batch data importer with BOM support
+│   │   │   ├── FormulaModal.jsx        # Field-specific formula calculator with repeat warnings
 │   │   │   ├── SignatureModal.jsx      # HTML5 canvas drawing & stamp PNG upload
 │   │   │   ├── EmailDispatchModal.jsx  # Local SMTP email dispatcher with personalized variables
 │   │   │   ├── TemplateDrawer.jsx      # Multi-template drawer retaining recipient data
 │   │   │   └── WelcomeFeatures.jsx     # Capabilities & demo template launcher
+│   │   ├── demoData.js                 # Offline demo dataset for GitHub Pages
 │   │   ├── App.jsx                     # Root state & responsive layout
 │   │   └── index.css                   # Executive palette (#00CED1) & tactile CSS
 │   ├── public/
@@ -123,6 +145,8 @@ docuforge/
 │   │   └── sitemap.xml                 # XML Sitemap
 │   ├── index.html                      # SEO, AEO & GEO JSON-LD schemas
 │   └── vite.config.js
+├── tests/
+│   └── test_security_and_features.py   # Pytest security and functional test suite
 ├── LICENSE                  # MIT License (Mazonia 2026)
 ├── run.py                   # Python launcher
 ├── start.bat                # Windows one-click runner

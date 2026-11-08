@@ -68,12 +68,45 @@ export default function DocumentPreview({
             signature_data_url: signatureDataUrl
           })
         });
-        const data = await resp.json();
-        if (isMounted && data.elements) {
-          setRenderedParagraphs(data.elements);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (isMounted && data.elements) {
+            setRenderedParagraphs(data.elements);
+          }
+        } else {
+          // Client-side fallback if running statically on GitHub Pages
+          if (template.sample_paragraphs) {
+            const fallback = template.sample_paragraphs.map(p => {
+              let html = p.text;
+              for (const [k, v] of Object.entries(replacements || {})) {
+                if (k.toLowerCase().includes("signature") && signatureDataUrl) {
+                  html = html.replaceAll(k, `<img src="${signatureDataUrl}" class="inline-block h-8 max-w-[140px] border-b border-dashed border-teal-500 align-middle my-1" />`);
+                } else if (v) {
+                  html = html.replaceAll(k, `<span class="doc-filled">${v}</span>`);
+                }
+              }
+              html = html.replace(/\[([^\[\]\n\r]+)\]/g, '<span class="doc-placeholder">[$1]</span>');
+              return { is_heading: p.is_heading, rendered_html: html };
+            });
+            if (isMounted) setRenderedParagraphs(fallback);
+          }
         }
       } catch (err) {
-        console.error("Failed to load interactive preview:", err);
+        if (template.sample_paragraphs) {
+          const fallback = template.sample_paragraphs.map(p => {
+            let html = p.text;
+            for (const [k, v] of Object.entries(replacements || {})) {
+              if (k.toLowerCase().includes("signature") && signatureDataUrl) {
+                html = html.replaceAll(k, `<img src="${signatureDataUrl}" class="inline-block h-8 max-w-[140px] border-b border-dashed border-teal-500 align-middle my-1" />`);
+              } else if (v) {
+                html = html.replaceAll(k, `<span class="doc-filled">${v}</span>`);
+              }
+            }
+            html = html.replace(/\[([^\[\]\n\r]+)\]/g, '<span class="doc-placeholder">[$1]</span>');
+            return { is_heading: p.is_heading, rendered_html: html };
+          });
+          if (isMounted) setRenderedParagraphs(fallback);
+        }
       } finally {
         if (isMounted) setInteractiveLoading(false);
       }
@@ -104,12 +137,26 @@ export default function DocumentPreview({
             signature_data_url: null
           })
         });
-        const data = await resp.json();
-        if (isMounted && data.elements) {
-          setRawParagraphs(data.elements);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (isMounted && data.elements) {
+            setRawParagraphs(data.elements);
+          }
+        } else if (template.sample_paragraphs) {
+          const rawFallback = template.sample_paragraphs.map(p => ({
+            is_heading: p.is_heading,
+            rendered_html: p.text.replace(/\[([^\[\]\n\r]+)\]/g, '<span class="doc-placeholder">[$1]</span>')
+          }));
+          if (isMounted) setRawParagraphs(rawFallback);
         }
       } catch (err) {
-        console.error("Failed to load raw template preview:", err);
+        if (template.sample_paragraphs) {
+          const rawFallback = template.sample_paragraphs.map(p => ({
+            is_heading: p.is_heading,
+            rendered_html: p.text.replace(/\[([^\[\]\n\r]+)\]/g, '<span class="doc-placeholder">[$1]</span>')
+          }));
+          if (isMounted) setRawParagraphs(rawFallback);
+        }
       } finally {
         if (isMounted) setRawLoading(false);
       }

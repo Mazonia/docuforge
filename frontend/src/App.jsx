@@ -10,6 +10,7 @@ import AboutModal from './components/AboutModal';
 import WelcomeFeatures from './components/WelcomeFeatures';
 import TemplateDrawer from './components/TemplateDrawer';
 import SignatureModal from './components/SignatureModal';
+import { DEMO_TEMPLATE } from './demoData';
 import { 
   FileText, 
   Table, 
@@ -110,13 +111,18 @@ export default function App() {
     } else {
       try {
         const resp = await fetch('/api/samples');
-        const data = await resp.json();
-        if (data.samples && data.samples.length > 0) {
-          await loadSampleTemplate(data.samples[0].filepath || data.samples[0].path);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.samples && data.samples.length > 0) {
+            await loadSampleTemplate(data.samples[0].filepath || data.samples[0].path);
+            return;
+          }
         }
       } catch (err) {
-        console.error("Could not load sample template:", err);
+        console.warn("Backend not detected, activating offline browser client mode.");
       }
+      // Instant offline / GitHub Pages demo mode fallback!
+      setupTemplate(DEMO_TEMPLATE);
     }
   };
 
