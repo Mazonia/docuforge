@@ -11,8 +11,13 @@ import {
   FileSpreadsheet, 
   Archive, 
   Sparkles, 
-  Info 
+  Info,
+  Calculator,
+  Mail,
+  PenTool
 } from 'lucide-react';
+import EmailDispatchModal from './EmailDispatchModal';
+import SignatureModal from './SignatureModal';
 
 export default function BatchGrid({
   template,
@@ -25,12 +30,59 @@ export default function BatchGrid({
   batchResult,
   onOpenFolder,
   onOpenCsvModal,
-  onOpenAddPlaceholderModal
+  onOpenAddPlaceholderModal,
+  globalSignature,
+  setGlobalSignature
 }) {
   const [batchTitle, setBatchTitle] = useState('Vanguard_Orbital_Ranger_Batch');
   const [format, setFormat] = useState('both');
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isSigModalOpen, setIsSigModalOpen] = useState(false);
 
   const placeholders = template?.placeholders || [];
+
+  // Batch Formula Calculation Engine (Suggestion 2)
+  const handleCalculateAllRows = () => {
+    setRows(prevRows => {
+      return prevRows.map(row => {
+        const updatedReplacements = { ...row.replacements };
+        let hours = 0;
+        let rate = 0;
+        let amount = 0;
+        let feePct = 0;
+
+        for (const [k, v] of Object.entries(updatedReplacements)) {
+          const valStr = String(v).replace(/[^0-9.]/g, '');
+          const num = parseFloat(valStr);
+          if (isNaN(num)) continue;
+
+          const kl = k.toLowerCase();
+          if (kl.includes('hour') && !kl.includes('rate')) hours = num;
+          else if (kl.includes('rate')) rate = num;
+          else if (kl.includes('amount') || kl.includes('subtotal') || kl.includes('bounty')) amount = num;
+          else if (kl.includes('fee') || kl.includes('surcharge') || kl.includes('[x]')) feePct = num;
+        }
+
+        const calculatedSubtotal = (hours > 0 && rate > 0) ? (hours * rate) : (amount || 45000);
+        const calculatedFee = (feePct > 0) ? (calculatedSubtotal * (feePct / 100)) : 0;
+        const calculatedTotal = calculatedSubtotal + calculatedFee;
+
+        placeholders.forEach(p => {
+          const pl = p.key.toLowerCase();
+          if ((pl.includes('total') || pl.includes('payout')) && !pl.includes('timing')) {
+            updatedReplacements[p.raw] = calculatedTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          } else if (pl.includes('amount') && hours > 0 && rate > 0) {
+            updatedReplacements[p.raw] = calculatedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          }
+        });
+
+        return {
+          ...row,
+          replacements: updatedReplacements
+        };
+      });
+    });
+  };
 
   // Build clean column descriptors with tailored widths based on data type
   const tableColumns = placeholders.map(p => {
@@ -255,6 +307,18 @@ export default function BatchGrid({
 
   return (
     <div className="space-y-6">
+      <EmailDispatchModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        records={batchResult?.records || rows}
+      />
+
+      <SignatureModal
+        isOpen={isSigModalOpen}
+        onClose={() => setIsSigModalOpen(false)}
+        onSave={(sig) => setGlobalSignature && setGlobalSignature(sig)}
+        currentSignature={globalSignature}
+      />
       
       {/* Batch Control Toolbar */}
       <div className="p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
@@ -268,7 +332,7 @@ export default function BatchGrid({
           <button
             type="button"
             onClick={addRow}
-            className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm"
+            className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm cursor-pointer"
             style={{
               backgroundColor: 'var(--color-primary)',
               color: '#FFFFFF'
@@ -281,7 +345,7 @@ export default function BatchGrid({
           <button
             type="button"
             onClick={loadSampleVendors}
-            className="btn-tactile text-xs font-medium px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all"
+            className="btn-tactile text-xs font-medium px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer"
             style={{
               backgroundColor: 'var(--bg-subtle)',
               borderColor: 'var(--border-color)',
@@ -292,10 +356,47 @@ export default function BatchGrid({
             <span>Load Sample Squadrons</span>
           </button>
 
+          {/* Calculate All Formulas (Suggestion 2) */}
+          <button
+            type="button"
+            onClick={handleCalculateAllRows}
+            className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer bg-[#00CED1]/15 border-[#00CED1] text-[#00CED1] hover:bg-[#00CED1]/25"
+            title="Calculate math formulas across all rows"
+          >
+            <Calculator className="w-3.5 h-3.5" />
+            <span>Calculate All Formulas</span>
+          </button>
+
+          {/* Global Signature (Suggestion 8) */}
+          <button
+            type="button"
+            onClick={() => setIsSigModalOpen(true)}
+            className={`btn-tactile text-xs font-semibold px-3 py-2 rounded-xl border flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer ${
+              globalSignature 
+                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400'
+                : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-[#00CED1]'
+            }`}
+            title="Set global signature for all batch documents"
+          >
+            <PenTool className="w-3.5 h-3.5" />
+            <span>{globalSignature ? 'Batch Signed' : 'Sign Batch'}</span>
+          </button>
+
+          {/* Email Dispatch Trigger (Suggestion 6) */}
+          <button
+            type="button"
+            onClick={() => setIsEmailModalOpen(true)}
+            className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer bg-slate-800 border-slate-700 text-slate-200 hover:border-[#00CED1]"
+            title="Dispatch generated batch PDFs via email/SMTP"
+          >
+            <Mail className="w-3.5 h-3.5 text-[#00CED1]" />
+            <span>Email Dispatch</span>
+          </button>
+
           <button
             type="button"
             onClick={onOpenCsvModal}
-            className="btn-tactile text-xs font-medium px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all"
+            className="btn-tactile text-xs font-medium px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer"
             style={{
               backgroundColor: 'var(--bg-subtle)',
               borderColor: 'var(--border-color)',
@@ -310,7 +411,7 @@ export default function BatchGrid({
           <button
             type="button"
             onClick={onOpenAddPlaceholderModal}
-            className="btn-tactile text-xs font-medium px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all"
+            className="btn-tactile text-xs font-medium px-3.5 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer"
             style={{
               backgroundColor: 'var(--bg-subtle)',
               borderColor: 'var(--border-color)',

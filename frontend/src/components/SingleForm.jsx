@@ -11,8 +11,14 @@ import {
   ChevronUp,
   Tag,
   Plus,
-  ExternalLink
+  ExternalLink,
+  Calculator,
+  PenTool,
+  ToggleLeft,
+  ToggleRight,
+  EyeOff
 } from 'lucide-react';
+import SignatureModal from './SignatureModal';
 
 export default function SingleForm({ 
   template, 
@@ -22,14 +28,71 @@ export default function SingleForm({
   isGenerating, 
   generationResult,
   onOpenFolder,
-  onOpenAddPlaceholderModal
+  onOpenAddPlaceholderModal,
+  signatureDataUrl,
+  setSignatureDataUrl,
+  hiddenClauses = [],
+  setHiddenClauses
 }) {
   const [docTitle, setDocTitle] = useState('Vanguard Mission - Aegis Recon');
   const [format, setFormat] = useState('both');
   const [showSnippets, setShowSnippets] = useState({});
   const [conditionalModes, setConditionalModes] = useState({});
+  const [isSigModalOpen, setIsSigModalOpen] = useState(false);
 
   const placeholders = template?.placeholders || [];
+
+  // Formula Calculation Engine (Suggestion 2)
+  const handleCalculateFormulas = () => {
+    setReplacements(prev => {
+      const updated = { ...prev };
+      
+      // Look for rate/hours/subtotal/fee values
+      let hours = 0;
+      let rate = 0;
+      let amount = 0;
+      let feePct = 0;
+
+      for (const [k, v] of Object.entries(updated)) {
+        const valStr = String(v).replace(/[^0-9.]/g, '');
+        const num = parseFloat(valStr);
+        if (isNaN(num)) continue;
+
+        const kl = k.toLowerCase();
+        if (kl.includes('hour') && !kl.includes('rate')) hours = num;
+        else if (kl.includes('rate')) rate = num;
+        else if (kl.includes('amount') || kl.includes('subtotal') || kl.includes('bounty')) amount = num;
+        else if (kl.includes('fee') || kl.includes('surcharge') || kl.includes('[x]')) feePct = num;
+      }
+
+      // Calculate any empty or target formula fields
+      const calculatedSubtotal = (hours > 0 && rate > 0) ? (hours * rate) : (amount || 45000);
+      const calculatedFee = (feePct > 0) ? (calculatedSubtotal * (feePct / 100)) : 0;
+      const calculatedTotal = calculatedSubtotal + calculatedFee;
+
+      // Update placeholders matching total / amount / payout
+      placeholders.forEach(p => {
+        const pl = p.key.toLowerCase();
+        if ((pl.includes('total') || pl.includes('payout')) && !pl.includes('timing')) {
+          updated[p.raw] = calculatedTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else if (pl.includes('amount') && hours > 0 && rate > 0) {
+          updated[p.raw] = calculatedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+      });
+
+      return updated;
+    });
+  };
+
+  // Toggle optional clause visibility (Suggestion 4)
+  const toggleClause = (clauseTitle) => {
+    if (!setHiddenClauses) return;
+    setHiddenClauses(prev => 
+      prev.includes(clauseTitle) 
+        ? prev.filter(c => c !== clauseTitle)
+        : [...prev, clauseTitle]
+    );
+  };
 
   // When amount or X changes, auto-update conditional clauses if linked
   useEffect(() => {
@@ -145,12 +208,20 @@ export default function SingleForm({
       template_path: template.filepath,
       doc_title: docTitle,
       format,
-      replacements
+      replacements,
+      signature_data_url: signatureDataUrl,
+      hidden_clauses: hiddenClauses
     });
   };
 
   return (
     <div className="space-y-6">
+      <SignatureModal
+        isOpen={isSigModalOpen}
+        onClose={() => setIsSigModalOpen(false)}
+        onSave={(sig) => setSignatureDataUrl && setSignatureDataUrl(sig)}
+        currentSignature={signatureDataUrl}
+      />
       
       {/* Presets & Actions Bar */}
       <div className="p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs"
@@ -169,7 +240,7 @@ export default function SingleForm({
                 key={idx}
                 type="button"
                 onClick={() => applyPreset(p)}
-                className="btn-tactile text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all"
+                className="btn-tactile text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   borderColor: 'var(--border-color)',
@@ -183,6 +254,32 @@ export default function SingleForm({
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
+          {/* Calculate Formulas Button (Suggestion 2) */}
+          <button
+            type="button"
+            onClick={handleCalculateFormulas}
+            className="btn-tactile text-xs font-semibold px-3 py-1.5 rounded-lg border flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer bg-[#00CED1]/15 border-[#00CED1] text-[#00CED1] hover:bg-[#00CED1]/25"
+            title="Click to calculate mathematical and financial fields"
+          >
+            <Calculator className="w-3.5 h-3.5" />
+            <span>Calculate Formulas</span>
+          </button>
+
+          {/* Attach Signature Button (Suggestion 8) */}
+          <button
+            type="button"
+            onClick={() => setIsSigModalOpen(true)}
+            className={`btn-tactile text-xs font-semibold px-3 py-1.5 rounded-lg border flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer ${
+              signatureDataUrl 
+                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400'
+                : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-[#00CED1]'
+            }`}
+            title="Draw or upload digital signature"
+          >
+            <PenTool className="w-3.5 h-3.5" />
+            <span>{signatureDataUrl ? 'Signature Attached' : 'Attach Signature'}</span>
+          </button>
+
           <button
             type="button"
             onClick={onOpenAddPlaceholderModal}
@@ -200,7 +297,7 @@ export default function SingleForm({
           <button
             type="button"
             onClick={handleFillDefaults}
-            className="text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors"
+            className="text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             Auto-Fill Suggestions
@@ -209,7 +306,7 @@ export default function SingleForm({
           <button
             type="button"
             onClick={handleClear}
-            className="text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors hover:text-red-500"
+            className="text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors hover:text-red-500 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
           >
             Clear
@@ -268,6 +365,42 @@ export default function SingleForm({
 
         </div>
 
+        {/* Smart Conditional Clauses (Include / Exclude - Suggestion 4) */}
+        <div className="p-4 rounded-2xl border bg-slate-950/40 border-slate-800 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <EyeOff size={13} className="text-[#00CED1]" /> Optional Paragraph & Clause Guards
+            </span>
+            <span className="text-[11px] text-slate-500">Toggle inclusion in generated doc</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {[
+              { id: 'warp_cell', label: 'Auxiliary Warp-Cell Surcharge Clause' },
+              { id: 'spaceport_fee', label: 'Spaceport Logistics Demolition Fee Clause' }
+            ].map(clause => {
+              const isExcluded = hiddenClauses.includes(clause.label);
+              return (
+                <div
+                  key={clause.id}
+                  onClick={() => toggleClause(clause.label)}
+                  className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                    !isExcluded 
+                      ? 'bg-slate-900 border-slate-700 text-slate-200' 
+                      : 'bg-rose-500/10 border-rose-500/30 text-rose-300 line-through opacity-75'
+                  }`}
+                >
+                  <span className="text-xs font-medium">{clause.label}</span>
+                  {!isExcluded ? (
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Included</span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-rose-400 bg-rose-500/20 px-2 py-0.5 rounded">Excluded</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Dynamic Fields List */}
         <div className="rounded-2xl border p-5 shadow-xs space-y-4"
           style={{
@@ -280,7 +413,7 @@ export default function SingleForm({
                 Template Fields & Conditions
               </h4>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                Customize client variables and conditional statements below.
+                Customize client variables, dates, currency, and conditional statements below.
               </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -339,7 +472,7 @@ export default function SingleForm({
                         <button
                           type="button"
                           onClick={() => toggleSnippet(field.raw)}
-                          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                           title="View context snippet"
                         >
                           {isSnippetOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -370,22 +503,29 @@ export default function SingleForm({
                       <div className="flex flex-col sm:flex-row gap-2">
                         <select
                           value={
-                            val.startsWith('is free') 
-                              ? 'is_free' 
-                              : val.startsWith('carries a setup fee') 
-                                ? 'fee' 
+                            val.startsWith('is fully subsidized') 
+                              ? 'subsidized' 
+                              : val.startsWith('carries an auxiliary') 
+                                ? 'surcharge' 
                                 : 'custom'
                           }
-                          onChange={(e) => handleConditionalChoice(field.raw, e.target.value, val)}
-                          className="text-xs px-3 py-2 rounded-lg border focus:outline-none transition-all font-medium"
+                          onChange={(e) => {
+                            if (e.target.value === 'subsidized') {
+                              handleInputChange(field.raw, 'is fully subsidized by Galactic Council');
+                            } else if (e.target.value === 'surcharge') {
+                              const amountVal = replacements['[amount]'] || '45,000';
+                              handleInputChange(field.raw, `carries an auxiliary warp-cell surcharge of ${amountVal} Credits`);
+                            }
+                          }}
+                          className="text-xs px-3 py-2 rounded-lg border focus:outline-none transition-all font-medium cursor-pointer"
                           style={{
                             backgroundColor: 'var(--bg-card)',
                             borderColor: 'var(--border-color)',
                             color: 'var(--text-primary)'
                           }}
                         >
-                          <option value="is_free">Option 1: Listing is Free (No Setup Fee)</option>
-                          <option value="fee">Option 2: Carries Setup Fee (GHS {replacements['[amount]'] || '150.00'})</option>
+                          <option value="surcharge">Option 1: Auxiliary Warp-Cell Surcharge ({replacements['[amount]'] || '45,000'} Credits)</option>
+                          <option value="subsidized">Option 2: Fully Subsidized by Galactic Council</option>
                           <option value="custom">Custom Condition / Clause...</option>
                         </select>
                       </div>
@@ -528,7 +668,7 @@ export default function SingleForm({
                   <a
                     href={generationResult.pdf_download_url}
                     download
-                    className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm"
+                    className="btn-tactile text-xs font-semibold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm"
                     style={{
                       backgroundColor: 'var(--color-secondary)',
                       color: '#FFFFFF'

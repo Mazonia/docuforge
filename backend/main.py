@@ -11,6 +11,8 @@ import json
 import time
 import zipfile
 import shutil
+import smtplib
+from email.message import EmailMessage
 import urllib.parse
 from typing import Dict, List, Any, Optional
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
@@ -59,12 +61,16 @@ class GenerateSingleRequest(BaseModel):
     doc_title: Optional[str] = "Document"
     format: str = "both"  # "docx", "pdf", or "both"
     replacements: Dict[str, Any]
+    signature_data_url: Optional[str] = None
+    hidden_clauses: Optional[List[str]] = None
 
 
 class BatchRecord(BaseModel):
     id: str
     label: Optional[str] = ""
     replacements: Dict[str, Any]
+    signature_data_url: Optional[str] = None
+    hidden_clauses: Optional[List[str]] = None
 
 
 class GenerateBatchRequest(BaseModel):
@@ -72,11 +78,27 @@ class GenerateBatchRequest(BaseModel):
     batch_title: Optional[str] = "Batch_Generation"
     format: str = "both"  # "docx", "pdf", or "both"
     records: List[BatchRecord]
+    global_signature: Optional[str] = None
+    hidden_clauses: Optional[List[str]] = None
 
 
 class PreviewRequest(BaseModel):
     template_path: str
     replacements: Optional[Dict[str, Any]] = None
+    signature_data_url: Optional[str] = None
+    hidden_clauses: Optional[List[str]] = None
+
+
+class EmailDispatchRequest(BaseModel):
+    smtp_host: str
+    smtp_port: int = 587
+    smtp_user: str
+    smtp_pass: str
+    from_email: str
+    to_email: str
+    subject: str
+    body: str
+    attachment_path: str
 
 
 @app.get("/api/status")
@@ -178,7 +200,12 @@ def preview_document(req: PreviewRequest):
     if not os.path.exists(req.template_path):
         raise HTTPException(status_code=404, detail="Template path does not exist.")
 
-    elements = render_html_preview(req.template_path, req.replacements or {})
+    elements = render_html_preview(
+        req.template_path,
+        req.replacements or {},
+        hidden_clauses=req.hidden_clauses,
+        signature_data_url=req.signature_data_url
+    )
     return {"elements": elements}
 
 
@@ -197,7 +224,13 @@ def render_doc_preview(req: PreviewRequest):
     preview_pdf = os.path.join(cache_dir, "preview.pdf")
 
     try:
-        generate_document(req.template_path, preview_docx, req.replacements or {})
+        generate_document(
+            req.template_path,
+            preview_docx,
+            req.replacements or {},
+            signature_data_url=req.signature_data_url,
+            hidden_clauses=req.hidden_clauses
+        )
         convert_docx_to_pdf(preview_docx, preview_pdf)
         pages = render_pdf_to_images(preview_pdf, dpi=130)
         return {
@@ -244,7 +277,13 @@ def generate_single(req: GenerateSingleRequest):
     base_out_name = f"{safe_title}"
 
     docx_out_path = os.path.join(OUTPUT_DIR, f"{base_out_name}.docx")
-    generate_document(req.template_path, docx_out_path, req.replacements)
+    generate_document(
+        req.template_path,
+        docx_out_path,
+        req.replacements,
+        signature_data_url=req.signature_data_url,
+        hidden_clauses=req.hidden_clauses
+    )
 
     result = {
         "success": True,
@@ -301,7 +340,15 @@ def generate_batch(req: GenerateBatchRequest):
         docx_file = os.path.join(batch_dir, f"{file_prefix}.docx")
 
         # Generate DOCX
-        generate_document(req.template_path, docx_file, rec.replacements)
+        sig = rec.signature_data_url or req.global_signature
+        rec_hidden = rec.hidden_clauses or req.hidden_clauses
+        generate_document(
+            req.template_path,
+            docx_file,
+            rec.replacements,
+            signature_data_url=sig,
+            hidden_clauses=rec_hidden
+        )
         generated_files.append(docx_file)
 
         pdf_file = None
@@ -420,6 +467,52 @@ def view_pdf_inline(filename: str):
             "Cache-Control": "no-cache"
         }
     )
+
+
+@app.post("/api/send-email")
+def send_email_dispatch(req: EmailDispatchRequest):
+    """
+    Sends an email with an attached PDF document through SMTP (TLS / SSL / Plain).
+    Zero cloud vendor lock-in; works with Gmail App Passwords, SendGrid, Mailgun, Outlook, or private SMTP.
+    """
+    if not os.path.exists(req.attachment_path):
+        raise HTTPException(status_code=404, detail="Attachment file does not exist.")
+
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = req.subject
+        msg["From"] = req.from_email
+        msg["To"] = req.to_email
+        msg.set_content(req.body)
+
+        # Attach file
+        with open(req.attachment_path, "rb") as f:
+            file_data = f.read()
+            file_name = os.path.basename(req.attachment_path)
+
+        maintype = "application"
+        subtype = "pdf" if file_name.endswith(".pdf") else "octet-stream"
+        msg.add_attachment(file_data, maintype=maintype, subtype=subtype, filename=file_name)
+
+        if req.smtp_port == 465:
+            with smtplib.SMTP_SSL(req.smtp_host, req.smtp_port) as server:
+                server.login(req.smtp_user, req.smtp_pass)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(req.smtp_host, req.smtp_port) as server:
+                server.ehlo()
+                try:
+                    server.starttls()
+                    server.ehlo()
+                except Exception:
+                    pass  # Non-TLS SMTP fallback
+                if req.smtp_user and req.smtp_pass:
+                    server.login(req.smtp_user, req.smtp_pass)
+                server.send_message(msg)
+
+        return {"success": True, "message": f"Successfully dispatched to {req.to_email}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SMTP dispatch failed: {str(e)}")
 
 
 @app.post("/api/export-csv-template")

@@ -2,7 +2,7 @@
 DocuForge Core Document Processor
 Handles placeholder extraction, run-preserving DOCX replacements,
 document preview generation, PDF-to-DOCX and DOCX-to-PDF conversion,
-and realistic high-resolution PDF page rendering.
+image/signature embedding, formatters, and realistic PDF rendering.
 """
 
 import os
@@ -11,6 +11,8 @@ import copy
 import shutil
 import base64
 import zipfile
+import datetime
+import tempfile
 from typing import Dict, List, Any, Optional
 import docx
 from docx.shared import Inches, Pt, RGBColor
@@ -47,6 +49,125 @@ def get_safe_header_footer_paragraphs(doc) -> List[Any]:
     return paragraphs
 
 
+def number_to_words(n: float) -> str:
+    """Converts a number to written English words (e.g. 45000 -> Forty-Five Thousand)."""
+    try:
+        n_int = int(n)
+    except Exception:
+        return str(n)
+
+    ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+            "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+            "Seventeen", "Eighteen", "Nineteen"]
+    tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+
+    def convert_below_thousand(num):
+        res = []
+        if num >= 100:
+            res.append(ones[num // 100] + " Hundred")
+            num %= 100
+        if num >= 20:
+            t = tens[num // 10]
+            if num % 10 != 0:
+                t += "-" + ones[num % 10]
+            res.append(t)
+        elif num > 0:
+            res.append(ones[num])
+        return " ".join(res)
+
+    if n_int == 0:
+        return "Zero"
+
+    parts = []
+    billions = n_int // 1000000000
+    n_int %= 1000000000
+    if billions:
+        parts.append(convert_below_thousand(billions) + " Billion")
+
+    millions = n_int // 1000000
+    n_int %= 1000000
+    if millions:
+        parts.append(convert_below_thousand(millions) + " Million")
+
+    thousands = n_int // 1000
+    n_int %= 1000
+    if thousands:
+        parts.append(convert_below_thousand(thousands) + " Thousand")
+
+    if n_int:
+        parts.append(convert_below_thousand(n_int))
+
+    return " ".join(parts).strip()
+
+
+def apply_formatting_filter(raw_value: Any, filter_type: str) -> str:
+    """
+    Applies built-in formatting filters:
+    - currency:USD / currency:GHS / currency:EUR / currency
+    - date:long / date:iso / date:relative
+    - words (number to written words)
+    - uppercase / lowercase / titlecase
+    """
+    if raw_value is None:
+        return ""
+    val_str = str(raw_value).strip()
+    f = filter_type.strip().lower()
+
+    # Currency formatters
+    if f.startswith("currency"):
+        parts = f.split(":")
+        curr_code = parts[1].upper() if len(parts) > 1 else "USD"
+        symbols = {"USD": "$", "GHS": "GH₵ ", "EUR": "€", "GBP": "£", "CREDITS": " CR"}
+        clean_num = re.sub(r'[^0-9.-]', '', val_str)
+        try:
+            num = float(clean_num)
+            symbol = symbols.get(curr_code, f"{curr_code} ")
+            if curr_code == "CREDITS":
+                return f"{num:,.2f}{symbol}"
+            return f"{symbol}{num:,.2f}"
+        except Exception:
+            return val_str
+
+    # Number to written words
+    if f == "words":
+        clean_num = re.sub(r'[^0-9.-]', '', val_str)
+        try:
+            num = float(clean_num)
+            return number_to_words(num)
+        except Exception:
+            return val_str
+
+    # Date formatters
+    if f.startswith("date"):
+        try:
+            d = None
+            for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d"):
+                try:
+                    d = datetime.datetime.strptime(val_str, fmt)
+                    break
+                except Exception:
+                    pass
+            if d:
+                if "long" in f:
+                    day = d.day
+                    suffix = 'th' if 11 <= day <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
+                    return d.strftime(f"%d{suffix} %B, %Y")
+                elif "iso" in f:
+                    return d.strftime("%Y-%m-%d")
+        except Exception:
+            pass
+
+    # Text transform formatters
+    if f == "uppercase":
+        return val_str.upper()
+    if f == "lowercase":
+        return val_str.lower()
+    if f == "titlecase":
+        return val_str.title()
+
+    return val_str
+
+
 def extract_bracket_placeholders(text: str) -> List[Dict[str, Any]]:
     """
     Extracts all bracketed placeholders from text, including nested or clause placeholders.
@@ -55,10 +176,7 @@ def extract_bracket_placeholders(text: str) -> List[Dict[str, Any]]:
     results = []
     seen_raw = set()
 
-    # 1. First, check for outer clauses with options or nested brackets:
-    # e.g. [is free / carries a setup fee of GHS [amount]]
-    # or [deducts a service fee of [X]% from each paid booking]
-    # or [by mobile money or bank transfer, within [payout timing] of the service date]
+    # 1. First, check for outer clauses with options or nested brackets
     clause_pattern = re.compile(r'\[([^[\]]*\[[^[\]]+\][^[\]]*)\]')
     for cm in clause_pattern.finditer(text):
         raw = cm.group(0)
@@ -67,16 +185,13 @@ def extract_bracket_placeholders(text: str) -> List[Dict[str, Any]]:
             continue
         seen_raw.add(raw)
 
-        # Detect conditional options separated by '/'
         options = []
         is_conditional = False
         if "/" in inner:
             is_conditional = True
             raw_options = [opt.strip() for opt in inner.split("/")]
-            # Clean options
             options = [opt for opt in raw_options if opt]
 
-        # Generate a clean short label
         short_label = generate_clean_label(inner)
 
         results.append({
@@ -90,7 +205,7 @@ def extract_bracket_placeholders(text: str) -> List[Dict[str, Any]]:
             "suggested": options[0] if options else inner
         })
 
-    # 2. Next, find simple non-nested brackets: [Title and Last Name], [Business Name], [X], [amount]
+    # 2. Next, find simple non-nested brackets: [Placeholder] or [Placeholder:filter]
     simple_matches = re.finditer(r'\[([^\[\]\n\r]+)\]', text)
     for m in simple_matches:
         raw = m.group(0)
@@ -99,11 +214,20 @@ def extract_bracket_placeholders(text: str) -> List[Dict[str, Any]]:
             continue
         seen_raw.add(raw)
 
-        inferred = infer_placeholder_type(inner)
+        # Check for filter syntax: e.g. [amount:currency:GHS]
+        base_key = inner
+        filter_name = ""
+        if ":" in inner and not inner.lower().startswith("http"):
+            parts = inner.split(":", 1)
+            base_key = parts[0].strip()
+            filter_name = parts[1].strip()
+
+        inferred = infer_placeholder_type(base_key)
         results.append({
             "raw": raw,
-            "key": inner,
-            "label": inner,
+            "key": base_key,
+            "filter": filter_name,
+            "label": base_key,
             "type": inferred["type"],
             "is_clause": False,
             "is_conditional": False,
@@ -117,12 +241,12 @@ def extract_bracket_placeholders(text: str) -> List[Dict[str, Any]]:
 def generate_clean_label(clause_text: str) -> str:
     """Generates a concise, human-friendly label for long clauses."""
     lower = clause_text.lower()
-    if "is free" in lower or "setup fee" in lower:
-        return "Setup Fee Terms"
-    if "service fee" in lower or "deducts" in lower:
-        return "Commission Fee Rate"
-    if "payout" in lower or "transfer" in lower or "mobile money" in lower:
-        return "Payout Timing & Terms"
+    if "is free" in lower or "setup fee" in lower or "subsidized" in lower or "surcharge" in lower:
+        return "Fee & Subsidy Terms"
+    if "service fee" in lower or "logistics fee" in lower or "deducts" in lower:
+        return "Fee Rate Protocol"
+    if "payout" in lower or "transfer" in lower or "timing" in lower:
+        return "Payout / Transfer Window"
     if len(clause_text) > 30:
         return clause_text[:28] + "..."
     return clause_text
@@ -132,33 +256,36 @@ def infer_placeholder_type(key: str) -> Dict[str, str]:
     """Infers an input type and realistic dummy value for a placeholder key."""
     k_lower = key.lower()
 
-    if any(w in k_lower for w in ["name", "client", "customer", "vendor", "recipient"]):
-        if any(w in k_lower for w in ["business", "company", "firm", "shop"]):
-            return {"type": "text", "suggested": "Studio 45 Visuals"}
-        return {"type": "text", "suggested": "Mr. Kwame Darko"}
+    if any(w in k_lower for w in ["name", "client", "commander", "ranger", "vendor", "recipient"]):
+        if any(w in k_lower for w in ["unit", "squadron", "business", "company"]):
+            return {"type": "text", "suggested": "Aegis Recon Squadron 9"}
+        return {"type": "text", "suggested": "Commander Valeria Cross"}
 
-    if any(w in k_lower for w in ["fee", "price", "amount", "cost", "ghs", "usd", "$"]):
-        return {"type": "number", "suggested": "150.00"}
+    if any(w in k_lower for w in ["fee", "price", "amount", "cost", "bounty", "credits", "$"]):
+        return {"type": "number", "suggested": "45,000"}
 
     if any(w in k_lower for w in ["rate", "percentage", "%", "commission"]) or key.strip() == "X":
-        return {"type": "number", "suggested": "7"}
+        return {"type": "number", "suggested": "6"}
 
     if any(w in k_lower for w in ["date", "time", "deadline", "timing", "schedule"]):
         if "timing" in k_lower:
             return {"type": "text", "suggested": "24 hours"}
         return {"type": "date", "suggested": "2026-12-01"}
 
-    if any(w in k_lower for w in ["service", "category", "industry"]):
-        return {"type": "text", "suggested": "photography & live streaming"}
+    if any(w in k_lower for w in ["division", "specialization", "service", "category"]):
+        return {"type": "text", "suggested": "Deep Space Plasma Interception"}
+
+    if any(w in k_lower for w in ["sector", "location", "star"]):
+        return {"type": "text", "suggested": "Kepler Outpost Sector 4"}
+
+    if any(w in k_lower for w in ["vessel", "class", "ship"]):
+        return {"type": "text", "suggested": "Vanguard Hyper-Cruiser MK-IV"}
 
     if any(w in k_lower for w in ["email", "mail"]):
-        return {"type": "email", "suggested": "contact@studio45.com"}
+        return {"type": "email", "suggested": "cross@novavanguard.space"}
 
-    if any(w in k_lower for w in ["phone", "mobile", "tel", "contact"]):
-        return {"type": "tel", "suggested": "+233 55 123 4567"}
-
-    if any(w in k_lower for w in ["address", "location", "city"]):
-        return {"type": "text", "suggested": "East Legon, Accra"}
+    if any(w in k_lower for w in ["signature", "stamp"]):
+        return {"type": "signature", "suggested": ""}
 
     return {"type": "text", "suggested": ""}
 
@@ -174,7 +301,6 @@ def scan_docx_template(docx_path: str) -> Dict[str, Any]:
     all_text_chunks = []
     paragraphs_info = []
 
-    # Scan body paragraphs
     for p_idx, p in enumerate(doc.paragraphs):
         p_text = p.text
         if p_text:
@@ -187,7 +313,6 @@ def scan_docx_template(docx_path: str) -> Dict[str, Any]:
                 "has_brackets": has_brackets
             })
 
-    # Scan tables
     table_count = len(doc.tables)
     for t_idx, table in enumerate(doc.tables):
         for r_idx, row in enumerate(table.rows):
@@ -204,12 +329,10 @@ def scan_docx_template(docx_path: str) -> Dict[str, Any]:
     full_text = "\n".join(all_text_chunks)
     placeholders_list = extract_bracket_placeholders(full_text)
 
-    # Calculate occurrence count and context snippets for each placeholder
     for item in placeholders_list:
         raw = item["raw"]
         item["occurrences"] = full_text.count(raw)
 
-        # Collect surrounding context snippet (up to 3 distinct snippets)
         snippets = []
         for p_info in paragraphs_info:
             if raw in p_info["text"]:
@@ -241,7 +364,7 @@ def scan_docx_template(docx_path: str) -> Dict[str, Any]:
 def find_text_in_docx(docx_path: str, search_query: str) -> Dict[str, Any]:
     """
     Searches for exact text or phrase in a document, returning occurrences and snippets.
-    Used when a user adds a new custom placeholder.
+    Used when a user adds a new custom placeholder by highlighting or typing.
     """
     if not os.path.exists(docx_path):
         return {"found": False, "count": 0, "snippets": []}
@@ -265,8 +388,7 @@ def find_text_in_docx(docx_path: str, search_query: str) -> Dict[str, Any]:
             for c in r.cells:
                 for p in c.paragraphs:
                     if search_query in p.text:
-                        p_count = p.text.count(search_query)
-                        count += p_count
+                        count += p.text.count(search_query)
 
     return {
         "found": count > 0,
@@ -275,17 +397,16 @@ def find_text_in_docx(docx_path: str, search_query: str) -> Dict[str, Any]:
     }
 
 
-def replace_in_paragraph(paragraph, search_text: str, replace_text: str) -> int:
+def replace_in_paragraph(paragraph, search_text: str, replace_text: str, signature_image_path: Optional[str] = None) -> int:
     """
     Replaces all occurrences of search_text in a paragraph while preserving
     font formatting across multi-run splits in Word XML.
-    Ensures no accidental newline characters slip into single-line runs
-    which would otherwise cause paragraphs to shift down.
+    If signature_image_path is provided and search_text is a signature tag,
+    embeds the image directly into the run!
     """
     if search_text not in paragraph.text:
         return 0
 
-    # Sanitize replacement string to prevent unintended line breaks
     clean_replace = str(replace_text).replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
 
     count = 0
@@ -319,7 +440,6 @@ def replace_in_paragraph(paragraph, search_text: str, replace_text: str) -> int:
                 break
 
         if start_r_idx is None or end_r_idx is None:
-            # Fallback
             for r in runs:
                 if search_text in r.text:
                     r.text = r.text.replace(search_text, clean_replace)
@@ -329,6 +449,9 @@ def replace_in_paragraph(paragraph, search_text: str, replace_text: str) -> int:
             r = runs[start_r_idx]
             offset = idx - run_starts[start_r_idx]
             r.text = r.text[:offset] + clean_replace + r.text[offset + len(search_text):]
+            if signature_image_path and os.path.exists(signature_image_path) and any(w in search_text.lower() for w in ["signature", "stamp"]):
+                r.text = ""
+                r.add_picture(signature_image_path, width=Inches(1.5))
         else:
             first_run = runs[start_r_idx]
             offset_first = idx - run_starts[start_r_idx]
@@ -341,24 +464,26 @@ def replace_in_paragraph(paragraph, search_text: str, replace_text: str) -> int:
             offset_last = end_idx - run_starts[end_r_idx]
             last_run.text = last_run.text[offset_last:]
 
+            if signature_image_path and os.path.exists(signature_image_path) and any(w in search_text.lower() for w in ["signature", "stamp"]):
+                first_run.text = ""
+                first_run.add_picture(signature_image_path, width=Inches(1.5))
+
         count += 1
 
     return count
 
 
-
-def replace_in_doc(doc, replacements: Dict[str, str]):
+def replace_in_doc(doc, replacements: Dict[str, str], signature_path: Optional[str] = None):
     """
     Applies replacements across all paragraphs, tables, headers, and footers.
     Processes compound clauses first to avoid inner placeholder conflicts.
     """
-    # Sort pairs by length descending so longer tokens get matched before short substrings
     sorted_pairs = sorted(replacements.items(), key=lambda x: len(x[0]), reverse=True)
 
     def process_p(p):
         for search_key, val in sorted_pairs:
             if search_key in p.text:
-                replace_in_paragraph(p, search_key, str(val))
+                replace_in_paragraph(p, search_key, str(val), signature_path)
 
     for p in doc.paragraphs:
         process_p(p)
@@ -373,17 +498,53 @@ def replace_in_doc(doc, replacements: Dict[str, str]):
         process_p(hfp)
 
 
-def generate_document(template_path: str, output_path: str, replacements: Dict[str, str]) -> str:
+def generate_document(
+    template_path: str,
+    output_path: str,
+    replacements: Dict[str, str],
+    signature_data_url: Optional[str] = None,
+    hidden_clauses: Optional[List[str]] = None
+) -> str:
     """
-    Generates a single customized DOCX by substituting placeholders.
+    Generates a single customized DOCX by substituting placeholders,
+    applying optional digital signature embedding, and pruning optional clauses.
     """
     if not os.path.exists(template_path):
         raise FileNotFoundError(f"Template not found: {template_path}")
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     doc = docx.Document(template_path)
-    replace_in_doc(doc, replacements)
-    doc.save(output_path)
+
+    # 1. Handle optional paragraph exclusion if specified
+    if hidden_clauses:
+        for phrase in hidden_clauses:
+            for p in list(doc.paragraphs):
+                if phrase and phrase in p.text:
+                    p._element.getparent().remove(p._element)
+
+    # 2. Extract signature image to temporary file if provided as base64
+    temp_sig_path = None
+    if signature_data_url and "," in signature_data_url:
+        try:
+            header, encoded = signature_data_url.split(",", 1)
+            sig_bytes = base64.b64decode(encoded)
+            fd, temp_sig_path = tempfile.mkstemp(suffix=".png")
+            os.close(fd)
+            with open(temp_sig_path, "wb") as f:
+                f.write(sig_bytes)
+        except Exception:
+            temp_sig_path = None
+
+    try:
+        replace_in_doc(doc, replacements, signature_path=temp_sig_path)
+        doc.save(output_path)
+    finally:
+        if temp_sig_path and os.path.exists(temp_sig_path):
+            try:
+                os.remove(temp_sig_path)
+            except Exception:
+                pass
+
     return output_path
 
 
@@ -480,10 +641,16 @@ def convert_pdf_to_docx(pdf_path: str, output_docx_path: str) -> str:
     return output_docx_path
 
 
-def render_html_preview(docx_path: str, replacements: Optional[Dict[str, str]] = None) -> List[Dict[str, Any]]:
+def render_html_preview(
+    docx_path: str,
+    replacements: Optional[Dict[str, str]] = None,
+    hidden_clauses: Optional[List[str]] = None,
+    signature_data_url: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """
     Produces structured data of paragraphs for the reactive live text preview.
     Handles compound clauses FIRST so conditional text reflects 100% properly.
+    Supports interactive highlight-to-placeholder and optional clause exclusions.
     """
     if not os.path.exists(docx_path):
         return []
@@ -491,8 +658,8 @@ def render_html_preview(docx_path: str, replacements: Optional[Dict[str, str]] =
     doc = docx.Document(docx_path)
     reps = replacements or {}
     elements = []
+    excluded = hidden_clauses or []
 
-    # Sort replacements by length descending so compound clauses get handled first
     sorted_reps = sorted(reps.items(), key=lambda x: len(x[0]), reverse=True)
 
     for p in doc.paragraphs:
@@ -500,16 +667,21 @@ def render_html_preview(docx_path: str, replacements: Optional[Dict[str, str]] =
         if not txt.strip():
             continue
 
+        # Check if paragraph matches an excluded optional clause
+        if any(h and h in txt for h in excluded):
+            continue
+
         style_name = p.style.name if p.style else "Normal"
         is_heading = "heading" in style_name.lower() or "title" in style_name.lower()
 
-        # Step 1: Replace compound clauses and explicit replacements first
         rendered_text = txt
         for raw_k, val in sorted_reps:
             if raw_k in rendered_text:
                 clean_val = str(val).strip() if val is not None else ""
-                if clean_val:
-                    # Escape HTML in user replacement
+                if signature_data_url and any(w in raw_k.lower() for w in ["signature", "stamp"]):
+                    sig_html = f'<img src="{signature_data_url}" alt="Digital Signature" class="inline-block h-8 max-w-[140px] border-b border-dashed border-teal-500 align-middle my-1" />'
+                    rendered_text = rendered_text.replace(raw_k, sig_html)
+                elif clean_val:
                     escaped_val = (
                         clean_val.replace('&', '&amp;')
                         .replace('<', '&lt;')
@@ -521,7 +693,6 @@ def render_html_preview(docx_path: str, replacements: Optional[Dict[str, str]] =
                         f'<span class="doc-filled" data-key="{safe_key}">{escaped_val}</span>'
                     )
 
-        # Step 2: Highlight any remaining un-filled bracket tokens
         def format_remaining_token(m):
             token = m.group(0)
             return f'<span class="doc-placeholder">{token}</span>'

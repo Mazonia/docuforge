@@ -8,6 +8,8 @@ import CsvImportModal from './components/CsvImportModal';
 import AddPlaceholderModal from './components/AddPlaceholderModal';
 import AboutModal from './components/AboutModal';
 import WelcomeFeatures from './components/WelcomeFeatures';
+import TemplateDrawer from './components/TemplateDrawer';
+import SignatureModal from './components/SignatureModal';
 import { 
   FileText, 
   Table, 
@@ -38,6 +40,19 @@ export default function App() {
   const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
   const [batchResult, setBatchResult] = useState(null);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+
+  // Digital Signature & Stamp (Suggestion 8)
+  const [signatureDataUrl, setSignatureDataUrl] = useState(null);
+  const [isGlobalSigOpen, setIsGlobalSigOpen] = useState(false);
+
+  // Smart Conditional Clauses Guard (Suggestion 4)
+  const [hiddenClauses, setHiddenClauses] = useState([]);
+
+  // Page Budget Guard (Suggestion 5)
+  const [pageBudget, setPageBudget] = useState(2);
+
+  // Reusable Presets & Template Drawer (Suggestion 7)
+  const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = useState(false);
 
   // Add Custom Placeholder State
   const [isAddPlaceholderOpen, setIsAddPlaceholderOpen] = useState(false);
@@ -301,6 +316,8 @@ export default function App() {
         onLoadSample={handleManualLoadSample}
         isSampleLoading={isSampleLoading}
         onOpenAbout={() => setIsAboutOpen(true)}
+        onOpenTemplateDrawer={() => setIsTemplateDrawerOpen(true)}
+        onOpenSignatureModal={() => setIsGlobalSigOpen(true)}
       />
 
       {/* Main Content: Naturally Responsive Container (Scales based on Window Size) */}
@@ -395,6 +412,10 @@ export default function App() {
                     generationResult={singleResult}
                     onOpenFolder={handleOpenFolder}
                     onOpenAddPlaceholderModal={() => setIsAddPlaceholderOpen(true)}
+                    signatureDataUrl={signatureDataUrl}
+                    setSignatureDataUrl={setSignatureDataUrl}
+                    hiddenClauses={hiddenClauses}
+                    setHiddenClauses={setHiddenClauses}
                   />
                 ) : (
                   <BatchGrid
@@ -409,6 +430,8 @@ export default function App() {
                     onOpenFolder={handleOpenFolder}
                     onOpenCsvModal={() => setIsCsvModalOpen(true)}
                     onOpenAddPlaceholderModal={() => setIsAddPlaceholderOpen(true)}
+                    globalSignature={signatureDataUrl}
+                    setGlobalSignature={setSignatureDataUrl}
                   />
                 )}
               </div>
@@ -419,6 +442,10 @@ export default function App() {
                   template={template}
                   replacements={activePreviewReplacements}
                   activeLabel={activePreviewLabel}
+                  hiddenClauses={hiddenClauses}
+                  signatureDataUrl={signatureDataUrl}
+                  pageBudget={pageBudget}
+                  onPageBudgetChange={setPageBudget}
                   onAddCustomFromSelection={handleOpenAddPlaceholderWithText}
                 />
               </div>
@@ -453,6 +480,23 @@ export default function App() {
       <AboutModal
         isOpen={isAboutOpen}
         onClose={() => setIsAboutOpen(false)}
+      />
+
+      {/* Template Workspace Drawer (Suggestion 7) */}
+      <TemplateDrawer
+        isOpen={isTemplateDrawerOpen}
+        onClose={() => setIsTemplateDrawerOpen(false)}
+        samples={serverStatus?.samples || []}
+        currentTemplatePath={template?.filepath}
+        onSelectTemplate={(sample) => loadSampleTemplate(sample.filepath || sample.path)}
+      />
+
+      {/* Global Signature Modal (Suggestion 8) */}
+      <SignatureModal
+        isOpen={isGlobalSigOpen}
+        onClose={() => setIsGlobalSigOpen(false)}
+        onSave={(sig) => setSignatureDataUrl(sig)}
+        currentSignature={signatureDataUrl}
       />
 
     </div>

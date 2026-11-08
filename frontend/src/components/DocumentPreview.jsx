@@ -11,13 +11,20 @@ import {
   RefreshCw,
   ExternalLink,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle,
+  BookmarkCheck,
+  PlusCircle
 } from 'lucide-react';
 
 export default function DocumentPreview({ 
   template, 
   replacements, 
   activeLabel,
+  hiddenClauses = [],
+  signatureDataUrl = null,
+  pageBudget = 2,
+  onPageBudgetChange,
   onAddCustomFromSelection
 }) {
   const [viewMode, setViewMode] = useState('interactive'); // 'interactive' | 'realistic'
@@ -36,7 +43,7 @@ export default function DocumentPreview({
   // Selected text state for adding custom placeholder
   const [selectedText, setSelectedText] = useState('');
 
-  // 1. Fetch interactive preview on replacements change
+  // 1. Fetch interactive preview on replacements, hiddenClauses or signatureDataUrl change
   useEffect(() => {
     if (!template?.filepath) {
       setRenderedParagraphs([]);
@@ -52,7 +59,9 @@ export default function DocumentPreview({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             template_path: template.filepath,
-            replacements: replacements || {}
+            replacements: replacements || {},
+            hidden_clauses: hiddenClauses,
+            signature_data_url: signatureDataUrl
           })
         });
         const data = await resp.json();
@@ -68,7 +77,7 @@ export default function DocumentPreview({
 
     fetchPreview();
     return () => { isMounted = false; };
-  }, [template?.filepath, replacements]);
+  }, [template?.filepath, replacements, hiddenClauses, signatureDataUrl]);
 
   // 2. Fetch realistic preview
   const fetchRealisticPreview = async () => {
@@ -80,7 +89,9 @@ export default function DocumentPreview({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           template_path: template.filepath,
-          replacements: replacements || {}
+          replacements: replacements || {},
+          hidden_clauses: hiddenClauses,
+          signature_data_url: signatureDataUrl
         })
       });
       const data = await resp.json();
@@ -116,6 +127,8 @@ export default function DocumentPreview({
   const handlePrint = () => {
     window.print();
   };
+
+  const isOverBudget = pageBudget > 0 && realisticPages.length > pageBudget;
 
   if (!template) {
     return (
@@ -184,13 +197,28 @@ export default function DocumentPreview({
           </button>
         </div>
 
-        {/* Center: Active Recipient Badge */}
-        {activeLabel && (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full truncate max-w-[150px]"
-            style={{ backgroundColor: 'var(--color-secondary-light)', color: 'var(--color-secondary)' }}>
-            {activeLabel}
-          </span>
-        )}
+        {/* Center: Page Budget Guard & Active Recipient Badge */}
+        <div className="flex items-center gap-2">
+          {viewMode === 'realistic' && realisticPages.length > 0 && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+              isOverBudget 
+                ? 'bg-rose-500/15 border-rose-500/40 text-rose-400' 
+                : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+            }`}>
+              {isOverBudget ? <AlertTriangle size={12} /> : <BookmarkCheck size={12} />}
+              <span>
+                Page Budget: {realisticPages.length} / {pageBudget || '∞'} {isOverBudget && '(Budget Exceeded!)'}
+              </span>
+            </div>
+          )}
+
+          {activeLabel && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full truncate max-w-[150px]"
+              style={{ backgroundColor: 'var(--color-secondary-light)', color: 'var(--color-secondary)' }}>
+              {activeLabel}
+            </span>
+          )}
+        </div>
 
         {/* Right: Controls */}
         <div className="flex items-center space-x-1.5">
@@ -240,24 +268,32 @@ export default function DocumentPreview({
         </div>
       </div>
 
-      {/* Floating Selection Action: Add highlighted text as placeholder */}
+      {/* Floating Selection Action: Visual Point-and-Click Placeholder Tagging */}
       {selectedText && (
         <div 
-          className="text-xs px-3 py-1.5 flex items-center justify-between animate-in fade-in"
-          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-text)' }}
+          className="text-xs px-4 py-2 flex items-center justify-between animate-fadeIn shadow-md border-b"
+          style={{ 
+            backgroundColor: '#00CED1', 
+            color: '#021013',
+            borderColor: '#00CED1'
+          }}
         >
-          <span className="truncate max-w-[240px]">
-            Selected: <code className="font-mono font-bold">"{selectedText}"</code>
-          </span>
+          <div className="flex items-center gap-2 truncate max-w-[280px]">
+            <Sparkles size={14} className="shrink-0" />
+            <span className="truncate">
+              Selected text: <strong>"{selectedText}"</strong>
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => {
               if (onAddCustomFromSelection) onAddCustomFromSelection(selectedText);
               setSelectedText('');
             }}
-            className="ml-2 font-bold underline cursor-pointer hover:opacity-80"
+            className="font-bold flex items-center gap-1.5 px-3 py-1 bg-slate-950 text-white rounded-lg hover:bg-slate-900 transition-transform active:scale-95 cursor-pointer text-[11px]"
           >
-            + Add as Placeholder
+            <PlusCircle size={13} className="text-[#00CED1]" />
+            Turn into Placeholder
           </button>
         </div>
       )}

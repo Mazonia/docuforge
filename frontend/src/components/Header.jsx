@@ -1,7 +1,16 @@
 import React from 'react';
-import { FileText, Sun, Moon, FolderOpen, Sparkles, HelpCircle } from 'lucide-react';
+import { FileText, Sun, Moon, FolderOpen, Sparkles, HelpCircle, FolderGit2, PenTool } from 'lucide-react';
 
-export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, isSampleLoading, onOpenAbout }) {
+export default function Header({ 
+  isDark, 
+  setIsDark, 
+  onOpenFolder, 
+  onLoadSample, 
+  isSampleLoading, 
+  onOpenAbout,
+  onOpenTemplateDrawer,
+  onOpenSignatureModal
+}) {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-md border-b transition-colors"
       style={{
@@ -35,6 +44,26 @@ export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, 
         {/* Action Controls */}
         <div className="flex items-center space-x-3">
           
+          {/* Template Workspace Drawer Toggle (Suggestion 7) */}
+          <button
+            onClick={onOpenTemplateDrawer}
+            className="btn-tactile text-xs font-semibold px-3 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer bg-slate-900 border-slate-700 text-slate-200 hover:border-[#00CED1]"
+            title="Browse and switch template files while retaining recipient data"
+          >
+            <FolderGit2 className="w-3.5 h-3.5 text-[#00CED1]" />
+            <span className="hidden sm:inline">Templates</span>
+          </button>
+
+          {/* Digital Signature Modal Toggle (Suggestion 8) */}
+          <button
+            onClick={onOpenSignatureModal}
+            className="btn-tactile text-xs font-semibold px-3 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer bg-slate-900 border-slate-700 text-slate-200 hover:border-[#00CED1]"
+            title="Configure digital signature stamp"
+          >
+            <PenTool className="w-3.5 h-3.5 text-[#00CED1]" />
+            <span className="hidden sm:inline">Signature</span>
+          </button>
+
           {/* Quick Load Sample */}
           <button
             onClick={onLoadSample}
