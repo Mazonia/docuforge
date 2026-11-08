@@ -137,3 +137,4 @@ function inferSuggested(key) {
   if (l.includes('date')) return '2026-12-01';
   return '';
 }
+
