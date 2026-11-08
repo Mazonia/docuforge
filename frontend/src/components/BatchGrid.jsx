@@ -695,14 +695,28 @@ export default function BatchGrid({
                         </a>
                       )}
                       {r.pdf && (
-                        <a
-                          href={`/api/download/${r.pdf}`}
-                          download
-                          className="px-2 py-0.5 rounded text-[10px] font-bold border transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950"
-                          style={{ color: 'var(--color-secondary)', borderColor: 'var(--border-color)' }}
-                        >
-                          PDF
-                        </a>
+                        <div className="flex items-center space-x-1">
+                          <a
+                            href={`/api/view-pdf/${r.pdf}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-0.5 rounded text-[10px] font-bold border transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950 flex items-center space-x-1"
+                            style={{ color: 'var(--color-secondary)', borderColor: 'var(--border-color)' }}
+                            title="Open PDF directly in browser"
+                          >
+                            <Eye className="w-2.5 h-2.5" />
+                            <span>PDF</span>
+                          </a>
+                          <a
+                            href={`/api/download/${r.pdf}`}
+                            download
+                            className="p-1 rounded text-[10px] border transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                            style={{ color: 'var(--text-muted)', borderColor: 'var(--border-color)' }}
+                            title="Download PDF"
+                          >
+                            <Download className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
                       )}
                     </div>
                   </div>

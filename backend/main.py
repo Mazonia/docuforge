@@ -8,6 +8,7 @@ import os
 import io
 import csv
 import json
+import time
 import zipfile
 import shutil
 import urllib.parse
@@ -214,7 +215,7 @@ def render_doc_preview(req: PreviewRequest):
             "success": True,
             "pages": pages,
             "page_count": len(pages),
-            "pdf_url": "/api/download/_preview_cache/preview.pdf"
+            "pdf_url": f"/api/view-pdf/_preview_cache/preview.pdf?t={int(time.time())}"
         }
     except Exception as e:
         return {"success": False, "error": str(e), "pages": []}
@@ -271,6 +272,7 @@ def generate_single(req: GenerateSingleRequest):
             convert_docx_to_pdf(docx_out_path, pdf_out_path)
             result["pdf_path"] = pdf_out_path
             result["pdf_download_url"] = f"/api/download/{urllib.parse.quote(os.path.basename(pdf_out_path))}"
+            result["pdf_view_url"] = f"/api/view-pdf/{urllib.parse.quote(os.path.basename(pdf_out_path))}"
         except Exception as e:
             result["pdf_error"] = str(e)
 
@@ -392,6 +394,42 @@ def download_file(filename: str):
         filepath,
         media_type=media_type,
         filename=clean_name
+    )
+
+
+@app.get("/api/view-pdf/{filename:path}")
+def view_pdf_inline(filename: str):
+    """
+    Renders generated PDF with inline Content-Disposition so modern browsers open
+    their native high-fidelity PDF viewer directly instead of a download or pretty-print dialog.
+    """
+    decoded = urllib.parse.unquote(filename).split("?")[0]
+    clean_name = os.path.basename(decoded)
+
+    # 1. Direct check in OUTPUT_DIR
+    filepath = os.path.join(OUTPUT_DIR, clean_name)
+
+    # 2. Check relative subpath (e.g. _preview_cache/preview.pdf or batch dirs)
+    rel_path = decoded.replace("/", os.sep).replace("\\", os.sep)
+    candidate = os.path.join(OUTPUT_DIR, rel_path)
+    if os.path.exists(candidate) and os.path.isfile(candidate):
+        filepath = candidate
+    elif not os.path.exists(filepath):
+        for root, dirs, files in os.walk(OUTPUT_DIR):
+            if clean_name in files:
+                filepath = os.path.join(root, clean_name)
+                break
+
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="PDF document not found.")
+
+    return FileResponse(
+        filepath,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{clean_name}"',
+            "Cache-Control": "no-cache"
+        }
     )
 
 

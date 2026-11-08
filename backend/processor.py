@@ -14,6 +14,7 @@ import zipfile
 from typing import Dict, List, Any, Optional
 import docx
 from docx.shared import Inches, Pt, RGBColor
+from docx.text.paragraph import Paragraph
 import pymupdf
 
 # Windows COM for Word native PDF export
@@ -23,6 +24,27 @@ try:
     HAS_WIN32COM = True
 except ImportError:
     HAS_WIN32COM = False
+
+
+def get_safe_header_footer_paragraphs(doc) -> List[Any]:
+    """
+    Safely retrieves paragraphs from headers and footers ONLY if header/footer parts
+    already exist in the document package relationships.
+
+    Prevents python-docx from implicitly generating empty header/footer XML parts,
+    which causes Microsoft Word to add top/bottom header margins and shift
+    anchored letterheads and document content down into extra pages.
+    """
+    paragraphs = []
+    try:
+        for rel in doc.part.rels.values():
+            if "header" in rel.reltype or "footer" in rel.reltype:
+                target = rel.target_part
+                for p_elem in target.element.xpath(".//w:p"):
+                    paragraphs.append(Paragraph(p_elem, target))
+    except Exception:
+        pass
+    return paragraphs
 
 
 def extract_bracket_placeholders(text: str) -> List[Dict[str, Any]]:
@@ -174,14 +196,10 @@ def scan_docx_template(docx_path: str) -> Dict[str, Any]:
                     if p.text:
                         all_text_chunks.append(p.text)
 
-    # Scan headers and footers
-    for s_idx, section in enumerate(doc.sections):
-        for hp in section.header.paragraphs:
-            if hp.text:
-                all_text_chunks.append(hp.text)
-        for fp in section.footer.paragraphs:
-            if fp.text:
-                all_text_chunks.append(fp.text)
+    # Scan headers and footers safely without creating dummy parts
+    for hfp in get_safe_header_footer_paragraphs(doc):
+        if hfp.text:
+            all_text_chunks.append(hfp.text)
 
     full_text = "\n".join(all_text_chunks)
     placeholders_list = extract_bracket_placeholders(full_text)
@@ -351,11 +369,8 @@ def replace_in_doc(doc, replacements: Dict[str, str]):
                 for p in cell.paragraphs:
                     process_p(p)
 
-    for section in doc.sections:
-        for hp in section.header.paragraphs:
-            process_p(hp)
-        for fp in section.footer.paragraphs:
-            process_p(fp)
+    for hfp in get_safe_header_footer_paragraphs(doc):
+        process_p(hfp)
 
 
 def generate_document(template_path: str, output_path: str, replacements: Dict[str, str]) -> str:

@@ -10,7 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
   Tag,
-  Plus
+  Plus,
+  ExternalLink
 } from 'lucide-react';
 
 export default function SingleForm({ 
@@ -505,18 +506,36 @@ export default function SingleForm({
               )}
 
               {generationResult.pdf_download_url && (
-                <a
-                  href={generationResult.pdf_download_url}
-                  download
-                  className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm"
-                  style={{
-                    backgroundColor: 'var(--color-secondary)',
-                    color: '#FFFFFF'
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download .PDF</span>
-                </a>
+                <div className="flex items-center space-x-1.5">
+                  <a
+                    href={generationResult.pdf_view_url || generationResult.pdf_download_url.replace('/download/', '/view-pdf/')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-tactile text-xs font-semibold px-3 py-2 rounded-xl flex items-center space-x-1.5 border shadow-xs"
+                    style={{
+                      borderColor: 'var(--color-secondary)',
+                      backgroundColor: 'transparent',
+                      color: 'var(--color-secondary)'
+                    }}
+                    title="View PDF directly in browser"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>View PDF</span>
+                  </a>
+
+                  <a
+                    href={generationResult.pdf_download_url}
+                    download
+                    className="btn-tactile text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm"
+                    style={{
+                      backgroundColor: 'var(--color-secondary)',
+                      color: '#FFFFFF'
+                    }}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download .PDF</span>
+                  </a>
+                </div>
               )}
 
               <button

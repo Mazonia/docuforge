@@ -6,6 +6,7 @@ import BatchGrid from './components/BatchGrid';
 import DocumentPreview from './components/DocumentPreview';
 import CsvImportModal from './components/CsvImportModal';
 import AddPlaceholderModal from './components/AddPlaceholderModal';
+import AboutModal from './components/AboutModal';
 import { 
   FileText, 
   Table, 
@@ -40,6 +41,9 @@ export default function App() {
   // Add Custom Placeholder State
   const [isAddPlaceholderOpen, setIsAddPlaceholderOpen] = useState(false);
   const [initialCustomText, setInitialCustomText] = useState('');
+
+  // About & FAQ Modal State
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   // Status info from backend
   const [serverStatus, setServerStatus] = useState(null);
@@ -288,6 +292,7 @@ export default function App() {
         onOpenFolder={handleOpenFolder}
         onLoadSample={handleManualLoadSample}
         isSampleLoading={isSampleLoading}
+        onOpenAbout={() => setIsAboutOpen(true)}
       />
 
       {/* Main Content: Naturally Responsive Container (Scales based on Window Size) */}
@@ -426,6 +431,12 @@ export default function App() {
         }}
         onAdd={handleAddCustomPlaceholder}
         templatePath={template?.filepath}
+      />
+
+      {/* About & FAQ Modal */}
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
       />
 
     </div>

@@ -1,101 +1,112 @@
 # DocuForge Studio ⚡
-### Enterprise Document Template & Multi-Client Batch Generation Engine
+### Enterprise Word (.docx) & PDF Template Engine with Multi-Client Batch Studio
 
-DocuForge Studio is a professional, high-performance document automation workspace designed specifically for companies that prepare contracts, proposals, agreements, and customized client documents from Word (.docx) and PDF templates.
+DocuForge Studio is a professional, high-performance document automation workspace designed for businesses, law firms, and agencies that prepare tailored proposals, agreements, contracts, and quotes from Microsoft Word (`.docx`) and PDF templates.
+
+It replaces fragile legacy Mail Merge tools with **run-safe OpenXML AST substitution**, **margin-locked coordinate preservation**, and **native Microsoft Word COM automation** for pixel-perfect PDF export with zero layout drift.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Intelligent Bracket Placeholder Scanner (`[...]`)**:
+1. **Smart Bracket Placeholder Scanner (`[...]`)**:
    - Recursively inspects Word `.docx` documents across all paragraphs, tables, headers, and footers.
-   - Detects all dynamic placeholder fields: e.g. `[Business Name]`, `[Title and Last Name]`, `[service type]`, `[amount]`, `[X]`, `[payout timing]`.
-   - Also identifies conditional / option clauses (e.g., `[is free / carries a setup fee of GHS [amount]]`).
-   - Extracts occurrence frequency, snippet contexts, and infers optimal data types.
+   - Detects dynamic fields: e.g. `[Business Name]`, `[Title and Last Name]`, `[service type]`, `[amount]`, `[payout timing]`.
+   - Automatically handles conditional option clauses (e.g. `[is free / carries a setup fee of GHS [amount]]`) with dropdowns and freeform editing.
 
 2. **Run-Safe Multi-Run XML Replacement Engine**:
-   - Solves Microsoft Word's infamous XML run-splitting quirk (where Word splits `[Client Name]` into multiple `<w:r>` tags).
-   - Character-span mapped substitution preserves exact font family, size, weights (bold/italic), colors, and paragraph styles.
+   - Solves Microsoft Word's XML run-splitting behavior where Word fragments words and brackets into multiple `<w:r>` tags.
+   - Computes character offsets across split run boundaries, substituting content in-place while strictly preserving original fonts, sizes, weights, and colors.
 
-3. **Two Distinct Data Filling Modes**:
-   - **Mode A: Single Document Form**:
-     - Fast, focused form with auto-labeled fields.
-     - Built-in instant presets (e.g. AsedaHost Photography, Sound Rentals, Catering).
-     - Live document preview with reactive badge highlights.
+3. **Zero-Shift Margin & Letterhead Preservation**:
+   - Prevents artificial header and footer injection that causes Word to add default 0.5-inch margins.
+   - Guarantees anchored letterheads, company logos, and 2-page documents remain strictly in their original coordinate space without pushing lines onto extra pages.
+
+4. **Add Custom Placeholders on the Fly**:
+   - Highlight any text in the live preview or type an exact word or sentence to define a custom variable without having to re-edit the source Word document.
+
+5. **Dual Previews (Interactive Markup & Realistic Word/PDF)**:
+   - **Live Markup View**: Real-time reactive token substitution with visual tag highlighting.
+   - **Realistic Word / PDF View**: High-resolution 150 DPI rasterized pages rendered via Microsoft Word COM.
+   - **Inline PDF Reader**: View generated PDFs directly in the browser's native reader with zero download popups or pretty-print dialogs.
+
+6. **Two Distinct Data Filling Modes**:
+   - **Mode A: Single Document Form**: Fast, focused form with auto-labeled fields, business presets, and instant download/viewing.
    - **Mode B: Multi-Client Tabular Grid (Batch Studio)**:
-     - **Spreadsheet-style data grid** where each row correlates to a single client or vendor so info is never mixed up.
-     - Add, duplicate, delete rows with full keyboard navigation.
+     - Responsive spreadsheet-style data grid where rows correlate to individual clients so data is never cross-contaminated.
      - Direct **Copy & Paste** support from Microsoft Excel and Google Sheets.
-     - **Export CSV Template** pre-populated with all detected placeholder headers.
-     - **Import CSV / TSV** parser with auto-header mapping.
-     - Generate all documents in one click, packaged into a `.zip` archive.
+     - **Export CSV Template** and **Import CSV / TSV** parser.
+     - One-click batch generation packaged into an organized `.zip` bundle.
 
-4. **100% Native Microsoft Word PDF Export**:
-   - Integrates directly with Microsoft Word COM automation (`win32com.client`) on Windows.
-   - Every exported PDF has 100% genuine Word typography, pagination, margins, and vector graphic crispness.
+7. **Executive Ergonomics (Zero AI Slop)**:
+   - Custom executive palette: Cerulean Blue (`#0284C7`), Emerald Jade (`#059669`), Warm Ochre Amber (`#D97706`).
+   - Absolutely zero purple/violet/indigo AI gradients.
+   - Full dark and light theme support with fluid spring physics.
 
-5. **PDF Reflow to Word**:
-   - Upload either `.docx` or `.pdf` files.
-   - Uploaded PDFs are reflowed into editable `.docx` templates while preserving text blocks and bracket placeholders.
+---
 
-6. **Editorial UI / UX (Behance & Figma Curated)**:
-   - **Zero AI Slop**: Clean editorial typography, subtle 1px slate borders, fluid spring physics micro-interactions.
-   - **Full Dark & Light Mode**: Smooth transition between Crisp Canvas light mode and Midnight Slate dark mode.
-   - **3 Harmonious Complementary Colors**:
-     - Deep Midnight Base (`#0B0F17` dark, `#F8FAFC` light)
-     - Royal Indigo (`#4F46E5` / `#6366F1`)
-     - Precision Teal / Emerald (`#0D9488` / `#10B981`)
-     - Warm Honey / Amber (`#D97706` / `#F59E0B` for bracket tokens)
+## 🤖 Search, Answer & Generative Engine Optimization (SEO / AEO / GEO)
+
+DocuForge is built with modern search and generative engine indexing in mind:
+- **AEO (Answer Engine Optimization)**: Embedded `application/ld+json` Schema.org `FAQPage` and `SoftwareApplication` graphs providing direct answers for Perplexity, ChatGPT Search, Bing Copilot, and Google AI Overviews.
+- **GEO (Generative Engine Optimization)**: Semantic entity definitions and structured data trees for LLM scrapers and agentic assistants.
+- **SEO**: Complete OpenGraph, Twitter Card, `robots.txt`, and XML sitemap specifications.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Launch the Studio
-Simply run the included batch file or Python script:
+### 1. Requirements
+- Windows 10/11 with Python 3.10+
+- Microsoft Word (for native COM PDF export; fallback mode available)
+- Node.js 18+ (for frontend development)
+
+### 2. Launching DocuForge
 ```powershell
-# Double-click start.bat, or run:
-cd C:\Users\Mazonia\.gemini\antigravity\scratch\docuforge
+# Clone the repository
+git clone https://github.com/Mazonia/docuforge.git
+cd docuforge
+
+# Launch backend and UI
 python run.py
 ```
-This automatically starts the backend server and opens your default browser at:
-👉 **`http://127.0.0.1:8000`**
-
-### 2. Workspace Directory
-The application is located at:
-`C:\Users\Mazonia\.gemini\antigravity\scratch\docuforge`
-
-Recommended Antigravity workspace setting:
-Set `C:\Users\Mazonia\.gemini\antigravity\scratch\docuforge` as your active workspace.
+Open your browser at **`http://127.0.0.1:8000`**.
 
 ---
 
-## 📁 Project Structure
+## 📁 Repository Structure
 
 ```
 docuforge/
 ├── backend/
-│   ├── main.py              # FastAPI server (upload, scan, preview, single & batch generation)
-│   ├── processor.py         # Word XML run replacement, bracket scanner, Word COM PDF exporter
-│   ├── samples/             # Bundled templates (e.g. "Aseda Host Business Proposal Letter.docx")
-│   ├── uploads/             # Temporary uploaded files
+│   ├── main.py              # FastAPI REST server & inline PDF viewer
+│   ├── processor.py         # Run-safe XML engine, bracket scanner, Word COM export
+│   ├── samples/             # Bundled templates (Aseda Host Business Proposal)
 │   ├── output/              # Generated DOCX, PDF, and ZIP archives
-│   └── static/              # Compiled high-performance React SPA bundle
+│   └── static/              # Production React SPA build
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Header.jsx           # App bar, dark/light toggle, sample loader
-│   │   │   ├── FileDropzone.jsx     # Drag & drop upload for DOCX and PDF
-│   │   │   ├── SingleForm.jsx       # Single document form with presets & instant download
-│   │   │   ├── BatchGrid.jsx        # Multi-client spreadsheet grid with batch generator
-│   │   │   ├── DocumentPreview.jsx  # Interactive live A4 preview with real-time token substitution
-│   │   │   └── CsvImportModal.jsx   # Excel/Google Sheets copy-paste & CSV importer
+│   │   │   ├── Header.jsx           # App bar, theme toggle, about modal trigger
+│   │   │   ├── AboutModal.jsx       # About DocuForge, AEO/GEO FAQ & architecture
+│   │   │   ├── FileDropzone.jsx     # Template upload for DOCX and PDF
+│   │   │   ├── SingleForm.jsx       # Single document form with instant view & download
+│   │   │   ├── BatchGrid.jsx        # Multi-client spreadsheet grid with CSV batching
+│   │   │   ├── DocumentPreview.jsx  # Interactive live & realistic Word/PDF preview
+│   │   │   └── CsvImportModal.jsx   # CSV/Excel batch data importer
 │   │   ├── App.jsx                  # Root state & responsive layout
-│   │   └── index.css                # Design system variables & tactile animations
-│   ├── package.json
+│   │   └── index.css                # Executive palette & tactile CSS
+│   ├── public/
+│   │   ├── robots.txt               # SEO crawler directives
+│   │   └── sitemap.xml              # Sitemap
+│   ├── index.html                   # SEO, AEO & GEO JSON-LD schemas
 │   └── vite.config.js
-├── run.py                   # One-click Python launcher
-├── start.bat                # One-click Windows batch runner
+├── run.py                   # Python launcher
+├── start.bat                # Windows one-click runner
 └── README.md
 ```
 
+---
+
+## 📄 License
+MIT License. Created by [Mazonia](https://github.com/Mazonia).

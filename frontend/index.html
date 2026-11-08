@@ -2,15 +2,147 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DocuForge Studio — Document Template & Batch Studio</title>
+    
+    <!-- Primary SEO Metadata -->
+    <title>DocuForge Studio — High-Fidelity Word (.docx) & PDF Batch Automation Engine</title>
+    <meta name="title" content="DocuForge Studio — High-Fidelity Word (.docx) & PDF Batch Automation Engine" />
+    <meta name="description" content="Automate Microsoft Word (.docx) and PDF document generation with run-safe OpenXML AST substitution, zero layout drift, margin preservation, smart bracket extraction, and multi-client spreadsheet batching." />
+    <meta name="keywords" content="word template engine, docx automation, mail merge alternative, word com pdf generator, batch document generation, proposal generator, contract automation, docuforge, run safe openxml, python docx batching" />
+    <meta name="author" content="Mazonia" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="theme-color" content="#0284C7" />
+    <link rel="canonical" href="https://github.com/Mazonia/docuforge" />
+
+    <!-- Favicon (Executive Cerulean Blue - No Purple/Indigo) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230284C7'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg>" />
+
+    <!-- Open Graph / Facebook / LinkedIn (SEO & Social Sharing) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DocuForge Studio" />
+    <meta property="og:url" content="https://github.com/Mazonia/docuforge" />
+    <meta property="og:title" content="DocuForge Studio — High-Fidelity Word (.docx) & PDF Batch Automation Engine" />
+    <meta property="og:description" content="Replaces fragile Mail Merge with run-safe Word OpenXML substitution and native Word COM PDF rendering. Zero letterhead shift, zero margin drift." />
+    <meta property="og:image" content="https://raw.githubusercontent.com/Mazonia/docuforge/main/docs/preview-banner.png" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://github.com/Mazonia/docuforge" />
+    <meta name="twitter:title" content="DocuForge Studio — Professional Document Automation Engine" />
+    <meta name="twitter:description" content="Pixel-perfect batch Word and PDF generation with smart bracket placeholders, multi-client matrix, and run-safe XML substitution." />
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/Mazonia/docuforge/main/docs/preview-banner.png" />
+
+    <!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Structured Data: JSON-LD for AEO (Perplexity, ChatGPT Search, Gemini, Google SGE) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://github.com/Mazonia/docuforge#webapp",
+          "name": "DocuForge Studio",
+          "url": "https://github.com/Mazonia/docuforge",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Windows, Linux, macOS",
+          "description": "High-fidelity Word (.docx) and PDF document automation platform. Scans bracket placeholders, supports multi-client spreadsheet batching, and exports via native Microsoft Word COM with zero layout drift.",
+          "author": {
+            "@type": "Person",
+            "name": "Mazonia",
+            "url": "https://github.com/Mazonia"
+          },
+          "offers": {
+            "@type": "Offer",
+            "price": "0.00",
+            "priceCurrency": "USD"
+          },
+          "featureList": [
+            "Smart bracket placeholder scanning for [Business Name] and nested clauses",
+            "Run-safe OpenXML AST substitution preserving original typography and styling",
+            "Zero-shift margin and letterhead coordinate preservation",
+            "Multi-client tabular matrix with CSV import and export",
+            "Native Microsoft Word COM PDF export for pixel-perfect pagination",
+            "Dual interactive HTML markup and 150 DPI realistic document previews",
+            "Clean executive color scheme without artificial AI purple or indigo tints"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://github.com/Mazonia/docuforge#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is DocuForge Studio?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "DocuForge Studio is a professional document templating and batch generation workstation created by Mazonia. It automates the population of Word (.docx) and PDF templates with client-specific pricing, dates, and terms while guaranteeing zero layout distortion, no broken font runs, and no unexpected extra pages."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does DocuForge avoid the formatting loss common in Word Mail Merge?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Microsoft Word frequently breaks words and bracket tokens across multiple XML runs (<w:r>). Traditional mail merge tools either fail to find these tokens or replace them in ways that corrupt font formatting. DocuForge maps character offsets across paragraph runs, performing in-place substitution that strictly preserves original fonts, sizes, colors, and line spacing."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does DocuForge preserve letterheads and margins where other tools shift lines down?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Standard OpenXML libraries often create empty header and footer XML parts by default when querying section properties. This forces Microsoft Word to inject default 0.5-inch header margins that displace margin-relative letterhead images and body text downward. DocuForge executes safe package relationship validation, ensuring headerless templates retain their exact 0-margin geometry and 2-page pagination."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can DocuForge generate documents for multiple clients in bulk?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. DocuForge features a responsive Multi-Client Tabular Grid where each row represents an independent recipient. Users can import client lists via CSV, customize individual parameters, and batch-export both DOCX and native PDF copies bundled into a clean ZIP archive."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does DocuForge handle conditional clauses and options?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "DocuForge's bracket engine detects compound conditional clauses separated by slashes (e.g., [is free / carries a setup fee of GHS [amount]]). It provides intuitive dropdown selectors alongside direct freeform text inputs, updating both live markup and authentic print previews in real time."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Generative Engine Optimization (GEO) & Semantic Crawler Fallback -->
+    <noscript>
+      <main style="max-width: 800px; margin: 40px auto; font-family: sans-serif; line-height: 1.6; padding: 0 20px;">
+        <h1>DocuForge Studio — Professional Document Automation Engine</h1>
+        <p>DocuForge Studio is a high-fidelity document generation platform developed by Mazonia that replaces fragile Mail Merge with run-safe OpenXML AST substitution and native Word COM PDF rendering.</p>
+        
+        <h2>Key Capabilities</h2>
+        <ul>
+          <li><strong>Smart Bracket Detection</strong>: Automatically identifies bracket variables (e.g. <code>[Business Name]</code>) and conditional options.</li>
+          <li><strong>Run-Safe XML Substitution</strong>: Replaces text across arbitrary Word run boundaries without font breakage.</li>
+          <li><strong>Zero Layout Drift</strong>: Guaranteed letterhead coordinate preservation and exact 2-page pagination.</li>
+          <li><strong>Multi-Client Spreadsheet Matrix</strong>: Batch produce customized documents for tens or hundreds of recipients with CSV import/export.</li>
+          <li><strong>Dual Previews</strong>: Live interactive markup preview and realistic 150 DPI Word-generated page views.</li>
+        </ul>
+
+        <h2>Open Source Repository</h2>
+        <p>Inspect source code, build instructions, and documentation on GitHub: <a href="https://github.com/Mazonia/docuforge">https://github.com/Mazonia/docuforge</a></p>
+      </main>
+    </noscript>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

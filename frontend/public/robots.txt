@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /output/
+
+Sitemap: https://docuforge.studio/sitemap.xml

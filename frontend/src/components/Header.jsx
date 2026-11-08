@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileText, Sun, Moon, FolderOpen, Sparkles } from 'lucide-react';
+import { FileText, Sun, Moon, FolderOpen, Sparkles, HelpCircle } from 'lucide-react';
 
-export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, isSampleLoading }) {
+export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, isSampleLoading, onOpenAbout }) {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-md border-b transition-colors"
       style={{
@@ -64,6 +64,21 @@ export default function Header({ isDark, setIsDark, onOpenFolder, onLoadSample, 
           >
             <FolderOpen className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Output Folder</span>
+          </button>
+
+          {/* About DocuForge & FAQ */}
+          <button
+            onClick={onOpenAbout}
+            className="btn-tactile text-xs font-semibold px-3 py-2 rounded-xl border flex items-center space-x-1.5 transition-all cursor-pointer"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-color)',
+              color: 'var(--color-primary)'
+            }}
+            title="Learn about DocuForge architecture, features, and AEO/GEO FAQ"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">About & FAQ</span>
           </button>
 
           {/* Dark / Light Toggle */}
