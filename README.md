@@ -39,7 +39,7 @@ It replaces fragile legacy Mail Merge tools with **run-safe OpenXML AST substitu
      - One-click batch generation packaged into an organized `.zip` bundle.
 
 7. **Executive Ergonomics (Zero AI Slop)**:
-   - Custom executive palette: Cerulean Blue (`#0284C7`), Emerald Jade (`#059669`), Warm Ochre Amber (`#D97706`).
+   - Custom vibrant palette: Dark Turquoise (`#00CED1`), Forest Jade (`#059669`), Warm Ochre Amber (`#D97706`).
    - Absolutely zero purple/violet/indigo AI gradients.
    - Full dark and light theme support with fluid spring physics.
 
@@ -81,7 +81,7 @@ docuforge/
 ├── backend/
 │   ├── main.py              # FastAPI REST server & inline PDF viewer
 │   ├── processor.py         # Run-safe XML engine, bracket scanner, Word COM export
-│   ├── samples/             # Bundled templates (Aseda Host Business Proposal)
+│   ├── samples/             # Bundled templates (Nova Vanguard Space Ranger Contract)
 │   ├── output/              # Generated DOCX, PDF, and ZIP archives
 │   └── static/              # Production React SPA build
 ├── frontend/
